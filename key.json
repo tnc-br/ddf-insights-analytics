@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "kazob-370920",
+  "private_key_id": "605b4c100189d4537f828b2ba9f2d51578fb5bfc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCgsQVaTL2Mpc5l\nfIUXl7pujR7CwUmJP3nkoVgTr/9W8b41bQ7it7a4ioEj3jMRiGZxQ/JMM2ie0p3M\nX4N4Qrh49o9Mro/s/6/mrSxe376m23RUShNGup0sd/UpQbTrvCZGAzlMWRRbGcoE\nbp69Hl3LslRPKW9bBUYgnTX8ZVyged3A6cscAxFLvCz/vGtrDdaK9nFnaGALAxA3\nLXu/geo7R9BxYUM6Z/+Tu3KKMHAfwa+CVJU4KbMoqnShgNPUv0pfDEsneifcJJpF\nrKl9lTUzOsHktnGA6L5mRk62p/NeI6ppISouqI9naG+u8+bb6QPxfElW9CZmxDrV\nhcJEGm/nAgMBAAECggEAGyZtshkfOaFWIx2L2zWeoUkktmE0DIV2EeQU3paw/L6x\nlZNMnY/OxpVYRngnhsHWFTMWwDs7ZQJO+RX2P55+TqnSAnHIDZIR5VbDFXCWZNjV\nadxuL1gecEIAYS0h5WaPzOqEhtrSLqZH1MHf/jIgROdniUyF7QoSFDabxX5WzSIl\nZTPfAzcMnPCr80Phijk+T2p+py6uckaocj0c40UXW+vG+ai2TUBO1G6p/N6IqzMk\navNibT/2kXpqLEGq5fX0JRJnjGPA3BwVF3xj2EyJGfyqy1vG9qrjke4PGMuwXlcT\ntLcJ9R7L8jBrXDDygbXuBY9AbDrMVIErhx9KrsDpyQKBgQDXXp80evntZyEi7wh9\n3O9iUgQbLdnaXGa2Xhc/Fk/ez/0ZcYeJI9lXLlrLlHjnapIPk1IjaworHINO/GFP\nwVuX+MuzvrcXQbDn+FWPzK8/TUNC+7v5cqmn9H5TJkPIm37qly46Lo+7xkJq7Zz4\nXxwa5K4GMI7RDT8QFLHz4U8ZiwKBgQC/AbFZRLgKq4plXWS5yeMp7MXmYZGJSies\nnhLP9972YVjvhBmhKpZsi9BDMA7X2e1N53orsFqPKHOKkX+eiGZOkde1POXOsYDS\n10guRj17H2xwLrdStSvS5OCsaCsslgk/cYY3CtR8B+HZpZDx5NmtqxjkTbGLdwgu\n7lp7Ci/2lQKBgEaJHus5O5GdLSUb1FQkf+Jbqiycn7T8fkdMGaD31cDLrcEfhZxM\nuWnsLKBwSAjCxoODZGtlKzdjZz3/On+8fBsRyOVdmOltAlt24c7u4paA336Yo7/W\n5em0EYt6BMk25CJA0UsM5NZC4I3UtIxD2hiUvMoaLSwagoTpwj51lEpxAoGATVJA\nGuUIo7khgzs1ZUhm3zfsPQDOS4drXCN5dhrfdVmfCQau4WE+F57Zpfk0aQjdWaYU\n/M6dOkqjyzpvMRwCXlgHvGR0myGcBr4DiEgC526nFRq0N5UDspHYqbJZl+j8wWQR\ncwK9VaBTOyoc7O85d2ZF41XYQ57h/y2aDyjmlakCgYAThnG93q1xlAhD7e9p5Lq0\nh9KPnUYp2+8fKYd9TX2FIXidT3M0vH1NK7WhK9VivuDV5C4v67LOMks3qaj1qWzz\nizCh3Yjukxe0yG4obOoxJn5+aOP2jHUUeSPaq9sBp25U7D3bsG4Vq4ecH9OU8QsD\nwsF29LZTPDh75bzpYff5kw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "fraud-detection-pipeline-sa@kazob-370920.iam.gserviceaccount.com",
+  "client_id": "106094178483426022631",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fraud-detection-pipeline-sa%40kazob-370920.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
