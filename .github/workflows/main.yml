@@ -58,11 +58,11 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
       with:
-        token_format: 'access_token'
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+        token_format: 'id_token'
+        #service_account_key: ${{ secrets.GCP_CREDENTIALS }}
         #credentials_json: ${{ secrets.gcp-sa-key }}
-#         workload_identity_provider: 'projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider'
-#         service_account: 'github-actions-service-account@kazob-370920.iam.gserviceaccount.com'
+        workload_identity_provider: 'projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider'
+        service_account: 'github-actions-service-account@kazob-370920.iam.gserviceaccount.com'
 
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloud-functions@v1'
