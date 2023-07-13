@@ -31,7 +31,7 @@ jobs:
 
        - id: "auth"
          name: "Authenticate to Google Cloud"
-         uses: "google-github-actions/auth@v0"
+         uses: "aronep6/action-functions-deploy@1.0.0"
          with:
 #            # Replace with your Workload Identity Provider Location
 #            workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider"
@@ -41,14 +41,14 @@ jobs:
             service_account_email: ${{ secrets.GCP_EMAIL }}
             service_account_key: ${{ secrets.GCP_CREDENTIALS }}
 
-       - id: "deploy"
-         uses: "google-github-actions/deploy-cloud-functions@v0"
-         with:
-          # Name of the Cloud Function, same as the entry point name
-          name: "helloWorld"
-          # Runtime to use for the function
-          runtime: "python311"
+#        - id: "deploy"
+#          uses: "google-github-actions/deploy-cloud-functions@v0"
+#          with:
+#           # Name of the Cloud Function, same as the entry point name
+#           name: "helloWorld"
+#           # Runtime to use for the function
+#           runtime: "python311"
 
-      # Example of using the output
-       - id: "test"
-         run: 'curl "${{ steps.deploy.outputs.url }}"'
+#       # Example of using the output
+#        - id: "test"
+#          run: 'curl "${{ steps.deploy.outputs.url }}"'
