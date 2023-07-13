@@ -60,7 +60,7 @@ jobs:
             name: hello_cloud_functions
             description: Test python cloud function # nullable
             project_id: ${{ secrets.GCP_PROJECT_ID }}
-            region: europe-east1
+            region: us-east1
             #source_dir: .
             # name of our function in our main.py file, defaults to the resource name suffix 
             entry_point: hello_firestore
@@ -72,6 +72,5 @@ jobs:
             max_instances: 1
             # optional configs, see google-cloud-actions/deploy-cloud-functions for full reference
             # list of key-value pairs to set as environment variables in the form KEY1=VALUE1,KEY2=VALUE2.#       env_vars: # optional
-            environment: "GEN_2"
             event_trigger_resource: "projects/kazob-370920/locations/us-east1/triggers/fraud-detection-231413"
             event_trigger_type: "google.cloud.firestore.document.v1.created"
