@@ -1,40 +1,75 @@
-name: Docker
+# name: Docker
 
-on:
-  push:
-    branches: [ main ]
+# on:
+#   push:
+#     branches: [ main ]
+
+# jobs:
+
+#     deploy:
+
+#         name: Setup Gcloud Account
+#         runs-on: ubuntu-latest
+#         env:
+#           IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
+#         steps:
+
+#         - name: Login
+#           uses: google-github-actions/setup-gcloud@v0
+#           with:
+#             project_id: ${{ secrets.GCP_PROJECT_ID }}
+#             service_account_email: ${{ secrets.GCP_EMAIL }}
+#             service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+
+#         - name: Configure Docker
+#           run: gcloud auth configure-docker --quiet
+
+#         - name: Checkout repository
+#           uses: actions/checkout@v2
+
+#         - name: Build Docker image
+#           run: docker build . -t $IMAGE_NAME
+
+#         #- name: Test Docker image -- Please add unit test
+#         #  run: docker run $IMAGE_NAME sh -c "pip main.py"
+
+#         - name: Push Docker image
+#           run: docker push $IMAGE_NAME
+
+#         - name: Deploy Docker image
+#           run: gcloud run deploy ${{ secrets.GCP_APP_NAME }} --image $IMAGE_NAME --region us-central1 --platform managed
+          
+name: Deployment
+
+# on commit push, run job
+on: [push]
 
 jobs:
+  run:
+    # worker runs on latest ubuntu
+    runs-on: ubuntu-latest
+    steps:
+        # checkout to our repository so we have access to the source code
+        - uses: actions/checkout@v2
 
-    deploy:
-
-        name: Setup Gcloud Account
-        runs-on: ubuntu-latest
-        env:
-          IMAGE_NAME: gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_APP_NAME }}
-        steps:
-
-        - name: Login
-          uses: google-github-actions/setup-gcloud@v0
+        # the actual deployment to google
+        - name: Cloud Functions Deploy
+          uses: google-github-actions/deploy-cloud-functions@v0.1.2
           with:
+            credentials: ${{ secrets.GCP_CREDENTIALS }}
+            name: hello_cloud_functions
+            description: Test python cloud function # nullable
             project_id: ${{ secrets.GCP_PROJECT_ID }}
-            service_account_email: ${{ secrets.GCP_EMAIL }}
-            service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-
-        - name: Configure Docker
-          run: gcloud auth configure-docker --quiet
-
-        - name: Checkout repository
-          uses: actions/checkout@v2
-
-        - name: Build Docker image
-          run: docker build . -t $IMAGE_NAME
-
-        #- name: Test Docker image -- Please add unit test
-        #  run: docker run $IMAGE_NAME sh -c "pip main.py"
-
-        - name: Push Docker image
-          run: docker push $IMAGE_NAME
-
-        - name: Deploy Docker image
-          run: gcloud run deploy ${{ secrets.GCP_APP_NAME }} --image $IMAGE_NAME --region us-central1 --platform managed
+            region: europe-west1
+            source_dir: src
+            # name of our function in our main.py file, defaults to the resource name suffix 
+            entry_point: hello_firestore
+            # runtime to use for the function
+            runtime: python39
+            # the function execution timeout
+            timeout: 60
+            # the maximum number of instances for the function.
+            max_instances: 1
+            # optional configs, see google-cloud-actions/deploy-cloud-functions for full reference
+            # list of key-value pairs to set as environment variables in the form KEY1=VALUE1,KEY2=VALUE2.
+    #       env_vars: # optional
