@@ -48,29 +48,43 @@ jobs:
   run:
     # worker runs on latest ubuntu
     runs-on: ubuntu-latest
-    steps:
-        # checkout to our repository so we have access to the source code
-        - uses: actions/checkout@v2
+#     steps:
+#         # checkout to our repository so we have access to the source code
+#         - uses: actions/checkout@v2
 
-        # the actual deployment to google
-        - name: Cloud Functions Deploy
-          uses: google-github-actions/deploy-cloud-functions@v0.1.2
-          with:
-            credentials: ${{ secrets.GCP_CREDENTIALS }}
-            name: hello_cloud_functions
-            description: Test python cloud function # nullable
-            project_id: ${{ secrets.GCP_PROJECT_ID }}
-            region: us-east1
-            #source_dir: .
-            # name of our function in our main.py file, defaults to the resource name suffix 
-            entry_point: hello_firestore
-            # runtime to use for the function
-            runtime: python311
-            # the function execution timeout
-            timeout: 60
-            # the maximum number of instances for the function.
-            max_instances: 1
-            # optional configs, see google-cloud-actions/deploy-cloud-functions for full reference
-            # list of key-value pairs to set as environment variables in the form KEY1=VALUE1,KEY2=VALUE2.#       env_vars: # optional
-            event_trigger_resource: "projects/kazob-370920/locations/us-east1/triggers/fraud-detection-231413"
-            event_trigger_type: "google.cloud.firestore.document.v1.created"
+#         # the actual deployment to google
+#         - name: Cloud Functions Deploy
+#           uses: google-github-actions/deploy-cloud-functions@v0.1.2
+#           with:
+#             credentials: ${{ secrets.GCP_CREDENTIALS }}
+#             name: hello_cloud_functions
+#             description: Test python cloud function # nullable
+#             project_id: ${{ secrets.GCP_PROJECT_ID }}
+#             region: us-east1
+#             #source_dir: .
+#             # name of our function in our main.py file, defaults to the resource name suffix 
+#             entry_point: hello_firestore
+#             # runtime to use for the function
+#             runtime: python311
+#             # the function execution timeout
+#             timeout: 60
+#             # the maximum number of instances for the function.
+#             max_instances: 1
+#             # optional configs, see google-cloud-actions/deploy-cloud-functions for full reference
+#             # list of key-value pairs to set as environment variables in the form KEY1=VALUE1,KEY2=VALUE2.#       env_vars: # optional
+#             event_trigger_resource: "projects/kazob-370920/locations/us-east1/triggers/fraud-detection-231413"
+#             event_trigger_type: "google.cloud.firestore.document.v1.created"
+
+    steps:
+    - name: Login
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_email: ${{ secrets.GCP_EMAIL }}
+        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+      
+    - name: Use gcloud CLI
+      run: gcloud info
+    
+    - name: 'Use to deploy a cloud function gen 2'
+      run: gcloud functions deploy httptest1 --gen2 --runtime=nodejs18 --region=us-central1 --source=backend/service-secured-test --trigger-http --allow-unauthenticated --entry-point=helloHttp --memory=256MB --timeout=60s
