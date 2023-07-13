@@ -68,7 +68,7 @@ jobs:
       uses: 'google-github-actions/deploy-cloud-functions@v1'
       with:
         name: 'my-function'
-        runtime: 'nodejs16'
+        runtime: 'python39'
 
     # Example of using the output
     - id: 'test'
