@@ -26,29 +26,47 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-       - uses: actions/checkout@v2
+#       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+#        - uses: actions/checkout@v2
 
-       #- id: "auth"
-       - uses: 'google-github-actions/auth@v1'
-         with:
-            #workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
-#            # Replace with your Workload Identity Provider Location
-#            workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider"
-#            # Replace with your GitHub Service Account
-#            service_account: "github-actions-service-account@kazob-370920.iam.gserviceaccount.com"
-            project_id: ${{ secrets.GCP_PROJECT_ID }}
-            service_account_email: ${{ secrets.GCP_EMAIL }}
-            service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-
-#        - id: "deploy"
-#          uses: "google-github-actions/deploy-cloud-functions@v0"
+#        #- id: "auth"
+#        - uses: 'google-github-actions/auth@v1'
 #          with:
-#           # Name of the Cloud Function, same as the entry point name
-#           name: "helloWorld"
-#           # Runtime to use for the function
-#           runtime: "python311"
+#             #workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
+# #            # Replace with your Workload Identity Provider Location
+# #            workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider"
+# #            # Replace with your GitHub Service Account
+# #            service_account: "github-actions-service-account@kazob-370920.iam.gserviceaccount.com"
+#             project_id: ${{ secrets.GCP_PROJECT_ID }}
+#             service_account_email: ${{ secrets.GCP_EMAIL }}
+#             service_account_key: ${{ secrets.GCP_CREDENTIALS }}
 
-#       # Example of using the output
-#        - id: "test"
-#          run: 'curl "${{ steps.deploy.outputs.url }}"'
+# #        - id: "deploy"
+# #          uses: "google-github-actions/deploy-cloud-functions@v0"
+# #          with:
+# #           # Name of the Cloud Function, same as the entry point name
+# #           name: "helloWorld"
+# #           # Runtime to use for the function
+# #           runtime: "python311"
+
+# #       # Example of using the output
+# #        - id: "test"
+# #          run: 'curl "${{ steps.deploy.outputs.url }}"'
+
+    - uses: 'actions/checkout@v3'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: 'projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider'
+        service_account: 'github-actions-service-account@kazob-370920.iam.gserviceaccount.com'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-cloud-functions@v1'
+      with:
+        name: 'my-function'
+        runtime: 'nodejs16'
+
+    # Example of using the output
+    - id: 'test'
+      run: 'curl "${{ steps.deploy.outputs.url }}"'
