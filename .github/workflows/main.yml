@@ -34,7 +34,7 @@ jobs:
         uses: "google-github-actions/auth@v0"
         with:
           # Replace with your Workload Identity Provider Location
-          workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/gh-provider"
+          workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider"
           # Replace with your GitHub Service Account
           service_account: "github-actions-service-account@kazob-370920.iam.gserviceaccount.com"
 
