@@ -40,7 +40,7 @@ jobs:
         uses: "google-github-actions/deploy-cloud-functions@v0"
         with:
           # Name of the Cloud Function, same as the entry point name
-          name: "helloWorld"
+          name: "hello_firestore"
           # Runtime to use for the function
           runtime: "python9"
 
