@@ -1,4 +1,4 @@
- from cloudevents.http import CloudEvent
+from cloudevents.http import CloudEvent
 import functions_framework
 from google.events.cloud import firestore as firestoredata
 # The Firebase Admin SDK to access Cloud Firestore.
