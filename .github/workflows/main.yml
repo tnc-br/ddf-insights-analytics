@@ -61,7 +61,7 @@ jobs:
             description: Test python cloud function # nullable
             project_id: ${{ secrets.GCP_PROJECT_ID }}
             region: europe-west1
-            source_dir: src
+            #source_dir: .
             # name of our function in our main.py file, defaults to the resource name suffix 
             entry_point: hello_firestore
             # runtime to use for the function
