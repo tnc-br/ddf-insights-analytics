@@ -58,6 +58,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v1'
       with:
+        token_format: 'access_token'
         workload_identity_provider: 'projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider'
         service_account: 'github-actions-service-account@kazob-370920.iam.gserviceaccount.com'
 
