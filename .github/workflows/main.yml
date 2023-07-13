@@ -38,7 +38,7 @@ jobs:
 #            # Replace with your GitHub Service Account
 #            service_account: "github-actions-service-account@kazob-370920.iam.gserviceaccount.com"
             project_id: ${{ secrets.GCP_PROJECT_ID }}
-            #service_account_email: ${{ secrets.GCP_EMAIL }}
+            service_account_email: ${{ secrets.GCP_EMAIL }}
             service_account_key: ${{ secrets.GCP_CREDENTIALS }}
 
 #        - id: "deploy"
