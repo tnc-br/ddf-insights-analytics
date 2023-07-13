@@ -39,4 +39,4 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     # value['validity'] = fraud_rate
     # # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
     # affected_doc.set(value)
-    print("Hola ssa")
+    print("Hola ssca")
