@@ -35,6 +35,7 @@ jobs:
         with:
           workload_identity_provider: 'projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider'
           service_account: 'github-actions-service-account@kazob-370920.iam.gserviceaccount.com'
+          deploy_timeout: 3000
 
       - id: "deploy"
         uses: "google-github-actions/deploy-cloud-functions@v0"
