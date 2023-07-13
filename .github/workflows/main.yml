@@ -29,10 +29,10 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
        - uses: actions/checkout@v2
 
-       - id: "auth"
-         name: "Authenticate to Google Cloud"
-         uses: "google-github-actions/deploy-cloud-functions@v0"
+       #- id: "auth"
+       - uses: 'google-github-actions/auth@v1'
          with:
+            #workload_identity_provider: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider'
 #            # Replace with your Workload Identity Provider Location
 #            workload_identity_provider: "projects/384214782537/locations/global/workloadIdentityPools/gh-pool/providers/github-provider"
 #            # Replace with your GitHub Service Account
