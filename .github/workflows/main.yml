@@ -76,6 +76,8 @@ jobs:
 #             event_trigger_type: "google.cloud.firestore.document.v1.created"
 
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
     - name: Login
       uses: google-github-actions/setup-gcloud@v0
       with:
