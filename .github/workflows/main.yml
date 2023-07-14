@@ -93,4 +93,4 @@ jobs:
       run: gcloud info
     
     - name: 'Use to deploy a cloud function gen 2'
-      run: gcloud functions deploy hello_firestore --gen2 --runtime=python311 --region=us-east1 --trigger-http
+      run: gcloud functions deploy fraud-detection-v0 --gen2 --runtime=python311 --region=us-east1 --trigger-resource="projects/kazob-370920/locations/us-east1/triggers/fraud-detection-231413" --trigger-location=us-east1 --source=. --entry-point=hello_firestore --trigger-event-filters=type=google.cloud.firestore.document.v1.created --trigger-event-filters=database='(default)'
