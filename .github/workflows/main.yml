@@ -92,5 +92,5 @@ jobs:
       run: gcloud components install beta
     
     - name: 'Use to deploy a cloud function gen 2'
-      run: gcloud beta functions event-types list | jq -r '.[]|select(.resource_type.name=="FIRESTORE_DOC").label' 
+      run: gcloud beta functions event-types list
       #gcloud functions deploy fraud-detection-v0 --gen2 --runtime=python311 --trigger-event --source=. --region=us-east1 --trigger-resource="projects/kazob-370920/locations/us-east1/triggers/fraud-detection-231413"  --entry-point=main 
