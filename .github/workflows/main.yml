@@ -86,7 +86,7 @@ jobs:
         service_account_key: ${{ secrets.GCP_CREDENTIALS }}
     
     - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v1'
+      uses: google-github-actions/setup-gcloud@v0
  
     - name: Use gcloud CLI
       run: gcloud info
