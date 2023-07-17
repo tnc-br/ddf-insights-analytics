@@ -43,10 +43,10 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     affected_doc.set(value)
 
 
-    # filename = 'origin_validation.ipynb'
-    # with open(filename) as ff:
-    #     nb_in = nbformat.read(ff, nbformat.NO_CONVERT)
+    filename = 'origin_validation.ipynb'
+    with open(filename) as ff:
+        nb_in = nbformat.read(ff, nbformat.NO_CONVERT)
         
-    # ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+    ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
     
-    # nb_out = ep.preprocess(nb_in)
+    nb_out = ep.preprocess(nb_in)
