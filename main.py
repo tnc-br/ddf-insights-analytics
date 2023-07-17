@@ -5,8 +5,7 @@ from google.events.cloud import firestore as firestoredata
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
 #from fraud import Fraud
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
+import papermill as pm
 
 
 app = initialize_app()
@@ -42,11 +41,7 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
     affected_doc.set(value)
 
-
-    filename = 'origin_validation.ipynb'
-    with open(filename) as ff:
-        nb_in = nbformat.read(ff, nbformat.NO_CONVERT)
         
-    ep = ExecutePreprocessor(timeout=600, kernel_name='python311')
+    ep = pm.execute_notebook('origin_validation.ipynb')
     
-    nb_out = ep.preprocess(nb_in)
+    print(ep)
