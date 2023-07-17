@@ -47,6 +47,6 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     with open(filename) as ff:
         nb_in = nbformat.read(ff, nbformat.NO_CONVERT)
         
-    ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
+    ep = ExecutePreprocessor(timeout=600, kernel_name='python311')
     
     nb_out = ep.preprocess(nb_in)
