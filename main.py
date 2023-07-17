@@ -5,8 +5,8 @@ from google.events.cloud import firestore as firestoredata
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
 #from fraud import Fraud
-#import nbformat
-#from nbconvert.preprocessors import ExecutePreprocessor
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
 
 
 app = initialize_app()
