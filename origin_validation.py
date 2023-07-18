@@ -63,7 +63,9 @@ class ttest():
 
     #self.carbon_means_iso.getInfo()
 
-  def ttest(self):
+  def evaluate(self, lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements):
+
+    self.initialize(self, lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements)
     """self.poi definition"""
 
     self.poi = ee.Geometry.self.point(lon,lat)
@@ -162,4 +164,4 @@ class ttest():
     """Origin Verification"""
 
     origin_validity = p_value_oxygen * p_value_carbon * p_value_nitrogen
-    return origin_validity;
+    return origin_validity
