@@ -12,7 +12,7 @@ class ttest():
     
 
   """Authentication and Authorization"""
-  def initialize(self, lat, lon, ):
+  def initialize(self, lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements):
     #Authenticate
     if os.path.isfile('key.json') :
 
