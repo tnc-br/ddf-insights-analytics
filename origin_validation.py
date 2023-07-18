@@ -45,19 +45,20 @@ class ttest():
 
         # fetching isoscapes
 
-        def get_asset_list(parent_name):
-            parent_asset = ee.data.getAsset(parent_name)
-            parent_id = parent_asset['name']
-            asset_list = []
-            child_assets = ee.data.listAssets({'parent': parent_id})['assets']
-            for child_asset in child_assets:
-                child_id = child_asset['name']
-                child_type = child_asset['type']
-                if child_type in ['FOLDER', 'IMAGE_COLLECTION']:
-                    # Recursively call the function to get child assets
-                    asset_list.extend(get_asset_list(child_id))
-                else:
-                    asset_list.append(child_id)
+        def get_asset_list(parent_name) -> list:
+          parent_asset = ee.data.getAsset(parent_name)
+          parent_id = parent_asset['name']
+          asset_list = []
+          child_assets = ee.data.listAssets({'parent': parent_id})['assets']
+          for child_asset in child_assets:
+              child_id = child_asset['name']
+              child_type = child_asset['type']
+              if child_type in ['FOLDER', 'IMAGE_COLLECTION']:
+                  # Recursively call the function to get child assets
+                  asset_list.extend(get_asset_list(child_id))
+              else:
+                  asset_list.append(child_id)
+          return asset_list
         asset_list = get_asset_list(ISOSCAPES_EE_PATH)
         for asset in asset_list:
             if ('oxygen' in asset) and ('mean' in asset):
