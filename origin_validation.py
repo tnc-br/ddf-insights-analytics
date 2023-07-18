@@ -130,7 +130,7 @@ class ttest():
     """ttest and p-value"""
 
     _, p_value_carbon = scipy.stats.ttest_ind_from_stats(
-                self.isotope_mean, self.isotope_std, len(carbon_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
+                isotope_mean, isotope_std, len(carbon_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
 
     """**Nitrogen**
 
