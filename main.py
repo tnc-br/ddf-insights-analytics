@@ -4,9 +4,7 @@ from google.events.cloud import firestore as firestoredata
 # The Firebase Admin SDK to access Cloud Firestore.
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
-#from fraud import Fraud
-import papermill as pm
-
+from origin_validation import ttest
 
 app = initialize_app()
 
@@ -40,18 +38,3 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     value['validity'] = fraud_rate
     # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
     affected_doc.set(value)
-
-        
-    parameters = {
-        'lat': -9,
-        'lon': -40,
-        'oxygen_measurements': [32,33,34],
-        'nitrogen_measurements': [22,23,24],
-        'carbon_measurements': [-20,-21,-23]
-    }
-    pm.execute_notebook(
-        'origin_validation.ipynb',
-        '/tmp/corigin_validation_out.ipynb',
-        parameters=parameters
-    )
-    logging.info("job completed")    
