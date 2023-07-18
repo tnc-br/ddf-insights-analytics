@@ -68,7 +68,7 @@ class ttest():
     self.initialize(lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements)
     """self.poi definition"""
 
-    self.poi = ee.Geometry.self.point(lon,lat)
+    self.poi = ee.Geometry.point(lon,lat)
 
     """***Oxygen***
 
