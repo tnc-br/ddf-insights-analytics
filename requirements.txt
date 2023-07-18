@@ -4,7 +4,8 @@ google-api-core
 protobuf==4.22.1
 cloudevents==1.9.0
 google-cloud-firestore==2.11.1
-firebase-admin
-scipy
 earthengine-api==0.1.358
 numpy==1.11.1
+firebase-admin
+scipy
+
