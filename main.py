@@ -42,6 +42,6 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     affected_doc.set(value)
 
         
-    ep = pm.execute_notebook('origin_validation.ipynb')
+    ep = pm.execute_notebook('origin_validation.ipynb', 'output.ipynb')
     
     print(ep)
