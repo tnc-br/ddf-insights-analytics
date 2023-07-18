@@ -28,9 +28,9 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     client: google.cloud.firestore.Client = firestore.client()
 
     affected_doc = client.collection(collection_path).document(document_path)
-
     # cur_value = firestore_payload.value.fields["original"].string_value
     # new_value = cur_value.upper()
+    
     value = affected_doc.get().to_dict()    
     fraud_rate = ttest().evaluate(-9,-44,[22,23,24],[24,45,32],[23,10,11])
     value['validity'] = fraud_rate
