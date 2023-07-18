@@ -43,11 +43,11 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
         
     parameters = {
-        'lat' = -9,
-        'lon' = -40,
-        'oxygen_measurements' = [32,33,34],
-        'nitrogen_measurements' = [22,23,24],
-        'carbon_measurements' = [-20,-21,-23]
+        'lat': -9,
+        'lon': -40,
+        'oxygen_measurements': [32,33,34],
+        'nitrogen_measurements': [22,23,24],
+        'carbon_measurements': [-20,-21,-23]
     }
     pm.execute_notebook(
         'origin_validation.ipynb',
