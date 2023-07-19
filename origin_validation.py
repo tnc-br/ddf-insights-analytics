@@ -65,9 +65,9 @@ class ttest():
                 self.oxygen_means_iso = ee.Image(asset)
             elif 'oxygen' in asset and 'variance' in asset:
                 self.oxygen_variances_iso = ee.Image(asset)
-            elif 'd13C' in asset:
-                self.carbon_means_iso = ee.Image(asset)
-                self.carbon_variances_iso = ee.Image(asset).select('b1')
+            elif 'd13C' in asset and 'gdal' in asset:
+                self.carbon_means_iso = ee.Image(asset).select('b1')
+                self.carbon_variances_iso = ee.Image(asset).select('b2')
             elif 'd15N' in asset and 'SD' in asset:
                 self.nitrogen_variances_iso = ee.Image(asset)
             elif 'd15N' in asset and 'SD' not in asset:
@@ -102,10 +102,6 @@ class ttest():
 
         """**Carbon** Isoscape """
 
-        # DELETE
-        self.carbon_means_iso = self.oxygen_means_iso
-        self.carbon_variances_iso = self.oxygen_variances_iso
-        # delete
         isoscape_mean = self.carbon_means_iso.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=self.poi,
@@ -113,7 +109,7 @@ class ttest():
         isoscape_var = self.carbon_variances_iso.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=self.poi,
-            scale=30).getInfo().get('b1')
+            scale=30).getInfo().get('b2')
         if isoscape_var is not None:
             isoscape_std = np.sqrt(isoscape_var)
         else:
