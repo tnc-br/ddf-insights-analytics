@@ -6,7 +6,7 @@ import scipy
 
 """Global Variable definition"""
 
-ISOSCAPES_EE_PATH = 'users/kazob/isoscapes'
+ISOSCAPES_EE_PATH = 'projects/kazob-370920/assets/isoscapes'
 
 
 class ttest():
