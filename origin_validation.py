@@ -158,4 +158,4 @@ class ttest():
         """Origin Verification"""
 
         origin_validity = p_value_oxygen * p_value_carbon * p_value_nitrogen
-        return origin_validity
+        return origin_validity, p_value_oxygen, p_value_carbon, p_value_nitrogen
