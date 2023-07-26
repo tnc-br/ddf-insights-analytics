@@ -35,8 +35,10 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
     fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(float(value.get('lat')),float(value.get('lon')),value.get('oxygen'),value.get('nitrogen'),value.get('carbon')).evaluate()
     value['validity'] = fraud_rate
-    value['validity_details']['p_value_oxygen'] = p_value_oxygen
-    value['validity_details']['p_value_carbon'] = p_value_carbon
-    value['validity_details']['p_value_nitrogen'] = p_value_nitrogen
+    value['validity_details'] = {
+        'p_value_oxygen': p_value_oxygen,
+        'p_value_carbon': p_value_carbon,
+        'p_value_nitrogen': p_value_nitrogen
+    }
     # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
     affected_doc.set(value)
