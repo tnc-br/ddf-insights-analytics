@@ -81,9 +81,9 @@ jobs:
     - name: Login
       uses: google-github-actions/setup-gcloud@v0
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_email: ${{ secrets.GCP_EMAIL }}
-        service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+        project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
+        service_account_email: ${{ secrets.DEV_GCP_EMAIL }}
+        service_account_key: ${{ secrets.DEV_GCP_CREDENTIALS }}
     
     - name: 'Set up Cloud SDK'
       uses: google-github-actions/setup-gcloud@v0
@@ -92,6 +92,6 @@ jobs:
       run: gcloud info
     
     - name: 'Use to deploy a cloud function gen 2'
-      run: gcloud functions deploy fraud-detection-new-sample --gen2 --runtime=python311 --source=. --region=us-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.created' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=us-east1 --trigger-service-account='384214782537-compute@developer.gserviceaccount.com' 
+      run: gcloud functions deploy fraud-detection-new-sample --gen2 --runtime=python311 --source=. --region=us-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.created' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=us-east1 --trigger-service-account='earth-engine-service-account@river-sky-386919.iam.gserviceaccount.com' 
       #--trigger-resource='projects/kazob-370920/databases/(default)/documents/untrusted_samples/{pushId}'
       #--trigger-topic=eventarc-us-east1-fraud-detection-231413-297
