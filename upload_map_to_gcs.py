@@ -4,6 +4,18 @@ from google.cloud import storage
 import os
 
 def generate_map_and_upload_to_gcs(lat: float, lon: float, document_id):
+    """
+    Generates a land use map centered on a given latitude and longitude, and uploads it to Google Cloud Storage.
+
+    Args:
+        lat (float): The latitude of the center point of the map.
+        lon (float): The longitude of the center point of the map.
+        document_id (str): The ID of the document to be uploaded to GCS.
+
+    Returns:
+        None.
+    """
+    
     point = ee.Geometry.Point(lon, lat)
     radius_1km_buffer = point.buffer(1000)
     radius_10km_buffer = point.buffer(10000)

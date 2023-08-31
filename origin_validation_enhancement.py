@@ -1,7 +1,24 @@
 import ee
 import os
 
-def origin_enhancement(lat: float, lon: float):
+def origin_enhancement(lat: float, lon: float) -> Tuple[Dict[str, Union[bool, float]], Dict[str, float], Dict[str, float], Dict[str, float]]:
+    """
+    Enhances the origin point with additional information about the surrounding area.
+
+    Args:
+        lat (float): The latitude of the origin point.
+        lon (float): The longitude of the origin point.
+
+    Returns:
+        A tuple containing the following dictionaries:
+        - water_results (Dict[str, Union[bool, float]]): A dictionary containing the following keys:
+            - is_point_water (bool): True if the origin point is covered by water, False otherwise.
+            - water_mean_in_1km_buffer (float): The mean water coverage percentage within a 1km buffer around the origin point.
+            - water_mean_in_10km_buffer (float): The mean water coverage percentage within a 10km buffer around the origin point.
+        - is_anthropic_pct (Dict[str, float]): A dictionary containing the percentage of pixels classified as anthropic (e.g. urban areas, agriculture) for each year between 2011 and 2021.
+        - is_primary_vegetation_pct (Dict[str, float]): A dictionary containing the percentage of pixels classified as primary vegetation (e.g. forests) for each year between 2011 and 2021.
+        - is_secondary_vegetation_or_regrowth_pct (Dict[str, float]): A dictionary containing the percentage of pixels classified as secondary vegetation or regrowth (e.g. pastures, fallows) for each year between 2011 and 2021.
+    """
     # load MapBiomas Brazil water image
     point = ee.Geometry.Point(lon, lat)
     radius_1km_buffer = point.buffer(1000)
