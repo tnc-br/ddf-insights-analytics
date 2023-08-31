@@ -8,4 +8,5 @@ earthengine-api==0.1.358
 numpy
 firebase-admin
 scipy
-
+ee
+geemap

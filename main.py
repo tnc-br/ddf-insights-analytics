@@ -5,6 +5,8 @@ from google.events.cloud import firestore as firestoredata
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
 from origin_validation import ttest
+from origin_validation_enhancement import origin_enhancement
+from upload_map_to_gcs import generate_map_and_upload_to_gcs
 
 app = initialize_app()
 
@@ -32,8 +34,21 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     # new_value = cur_value.upper()
     
     value = affected_doc.get().to_dict()
+    lat = float(value.get('lat'))
+    lon = float(value.get('lon'))
 
-    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(float(value.get('lat')),float(value.get('lon')),value.get('oxygen'),value.get('nitrogen'),value.get('carbon')).evaluate()
+    if lat and lon:
+        water_pct, land_use_anthropic_pct, land_use_primary_vegetation_pct, land_use_secondary_vegetation_or_regrowth_pct = origin_enhancement(lat, lon)
+
+        value['water_pct'] = water_pct
+        value['land_use_anthropic_pct'] = land_use_anthropic_pct
+        value['land_use_primary_vegetation_pct'] = land_use_primary_vegetation_pct
+        value['land_use_secondary_vegetation_or_regrowth_pct'] = land_use_secondary_vegetation_or_regrowth_pct
+        affected_doc.set(value)
+
+        generate_map_and_upload_to_gcs(lat, lon, document_path)
+
+    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(lat,lon,value.get('oxygen'),value.get('nitrogen'),value.get('carbon')).evaluate()
     value['validity'] = fraud_rate
     value['validity_details'] = {
         'p_value_oxygen': p_value_oxygen,
