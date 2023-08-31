@@ -1,7 +1,7 @@
 import ee
 import os
 
-def origin_enhancement(lat: float, lon: float) -> Tuple[Dict[str, Union[bool, float]], Dict[str, float], Dict[str, float], Dict[str, float]]:
+def origin_enhancement(lat: float, lon: float):
     """
     Enhances the origin point with additional information about the surrounding area.
 
