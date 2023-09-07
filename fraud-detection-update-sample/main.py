@@ -9,6 +9,7 @@ import fraud_detection_fetch_land_use_data
 import fraud_detection_generate_map_and_upload_to_gcs
 import traceback
 from collections.abc import Sequence
+from fetch_mapbiomas_alerts import fetch_alerts
 
 app = initialize_app()
 
@@ -59,13 +60,12 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
             print(f'caught {type(e)} while creating land use map from MapBiomas: e')
             print(traceback.format_exc())
 
-        # TODO(jjcastro): Add this back
         # STEP 4: query the MapBiomas Alerta API to get alerts near the given (lat,lon)
-        # try:
-        #     value = fraud_detection_fetch_alerts(value)
-        # except Exception as e:
-        #     print(f'caught {type(e)} while querying the MapBiomas Alerta API: e')
-        #     print(traceback.format_exc())
+        try:
+            value = fetch_alerts(float(value.get('lat')), float(value.get('lon')))
+        except Exception as e:
+            print(f'caught {type(e)} while querying the MapBiomas Alerta API: e')
+            print(traceback.format_exc())
     
     # Finally: update the Firestore document with the validity and additional information
     # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
