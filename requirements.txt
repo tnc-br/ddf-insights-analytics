@@ -10,3 +10,6 @@ firebase-admin
 scipy
 ee
 geemap
+reportlab
+weasyprint
+jinja2
