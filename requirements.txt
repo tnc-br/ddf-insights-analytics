@@ -10,3 +10,4 @@ firebase-admin
 scipy
 ee
 geemap
+geopy
