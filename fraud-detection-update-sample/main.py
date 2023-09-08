@@ -4,12 +4,11 @@ from google.events.cloud import firestore as firestoredata
 # The Firebase Admin SDK to access Cloud Firestore.
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
-from origin_validation import ttest
-from origin_validation_enhancement import origin_enhancement
-from upload_map_to_gcs import generate_map_and_upload_to_gcs
-from fetch_mapbiomas_alerts import fetch_alerts
-import collections.abc
-import json
+import fraud_detection_process_sample
+import fraud_detection_fetch_land_use_data
+import fraud_detection_generate_map_and_upload_to_gcs
+import traceback
+from collections.abc import Sequence
 
 app = initialize_app()
 
@@ -21,70 +20,94 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     """
     firestore_payload = firestoredata.DocumentEventData()
     firestore_payload._pb.ParseFromString(cloud_event.data)
-    #print(f"Received event with ID: {cloud_event['id']} and data {cloud_event.data}")
-    print(cloud_event.data)
-    print(firestore_payload.value)
-    path_parts = firestore_payload.value.name.split("/")
+
+    collection_path, document_path = parse_path_parts(firestore_payload.value.name)
+
+    print(f"Collection path: {collection_path}")
+    print(f"Document path: {document_path}")
+
+    client: google.cloud.firestore.Client = firestore.client()
+    affected_doc = client.collection(collection_path).document(document_path)
+
+    if not is_document_creation_or_update_with_new_inputs(firestore_payload.old_value, firestore_payload.value):
+        print("No inputs have changed, skipping")
+        return
+    
+    value = affected_doc.get().to_dict()
+    
+    if "lat" in value and "lon" in value:
+        # STEP 1: calculate the validity of the sample
+        try:
+            value = fraud_detection_process_sample(value)
+        except Exception as e:
+            print(f'caught {type(e)} while calculating the validity of the sample: e')
+            print(traceback.format_exc())
+        
+        # STEP 2: calculate land use percentages from MapBiomas, and generate a map 
+        try:
+            value = fraud_detection_fetch_land_use_data(value)
+
+        except Exception as e:
+            print(f'caught {type(e)} while calculating land use percentages or map: e')
+            print(traceback.format_exc())
+
+        # STEP 3: upload a map to GCS showing land use from MapBiomas
+        try:
+            fraud_detection_generate_map_and_upload_to_gcs(float(value.get('lat')), float(value.get('lon')), document_path)
+
+        except Exception as e:
+            print(f'caught {type(e)} while creating land use map from MapBiomas: e')
+            print(traceback.format_exc())
+
+        # TODO(jjcastro): Add this back
+        # STEP 4: query the MapBiomas Alerta API to get alerts near the given (lat,lon)
+        # try:
+        #     value = fraud_detection_fetch_alerts(value)
+        # except Exception as e:
+        #     print(f'caught {type(e)} while querying the MapBiomas Alerta API: e')
+        #     print(traceback.format_exc())
+    
+    # Finally: update the Firestore document with the validity and additional information
+    # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
+    affected_doc.set(value)
+
+def is_document_creation_or_update_with_new_inputs(old_value, new_value) -> bool:
+    """Checks whether a Firestore document is new or whether its input fields have been updated.
+    Args:
+        old_value: A dictionary representing the fields and their values of the Firestore document before the update. None if this is a document creation.
+        new_value: A dictionary representing the fields and their values of the Firestore document after the update.
+    Returns:
+        True if this is a document creation or a document update with input fields have been updated. False if this is a document update where only output fields have changed.
+    """
+    if old_value:
+        # Clear all the "output" fields, to verify whether the inputs have changed
+        output_fields = ["validity", "validity_details", "water_pct", "land_use_anthropic_pct", "land_use_primary_vegetation_pct", "land_use_secondary_vegetation_or_regrowth_pct", "alerts"]
+        new_value_without_outputs = new_value.copy()
+        old_value_without_outputs = old_value.copy()
+
+        for field in output_fields:
+            if field in old_value_without_outputs:
+                old_value_without_outputs.pop(field, None)
+            if field in new_value_without_outputs:
+                new_value_without_outputs.pop(field, None)
+                
+        return not new_value_without_outputs == old_value_without_outputs
+    return True
+
+
+def parse_path_parts(firestore_payload_name: str):
+    """
+    Parses a Firestore document path and returns the collection path and document path.
+
+    Args:
+        path_parts (List[str]): A list of strings representing the parts of the document path.
+
+    Returns:
+        A tuple containing the collection path (str) and document path (str).
+    """
+    path_parts = firestore_payload_name.split("/")
     separator_idx = path_parts.index("documents")
     collection_path = path_parts[separator_idx + 1]
     document_path = "/".join(path_parts[(separator_idx + 2) :])
 
-    print(f"Collection path: {collection_path}")
-    print(f"Document path: {document_path}")
-    client: google.cloud.firestore.Client = firestore.client()
-
-    affected_doc = client.collection(collection_path).document(document_path)
-    # cur_value = firestore_payload.value.fields["original"].string_value
-    # new_value = cur_value.upper()
-
-    
-
-    doc = affected_doc.get()
-
-    if doc.exists:
-      value = affected_doc.get().to_dict()
-
-      if ('oxygen' in value) and ('nitrogen' in value) and ('carbon' in value) and ('lat' in value) and ('lon' in value):
-        oxygen = value.get('oxygen')
-        nitrogen = value.get('nitrogen')
-        carbon = value.get('carbon')
-        if isinstance(oxygen, collections.abc.Sequence) and isinstance(nitrogen, collections.abc.Sequence) and isinstance(carbon, collections.abc.Sequence):
-          if len(oxygen) >=2 and len(nitrogen) >=2 and len(carbon) >=2 :
-            fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(float(value.get('lat')),float(value.get('lon')),oxygen,nitrogen,carbon).evaluate()
-            validity_details = {
-                'p_value_oxygen': p_value_oxygen,
-                'p_value_carbon': p_value_carbon,
-                'p_value_nitrogen': p_value_nitrogen
-            }
-            results_changed = False
-            if( ('validity' in value) and (value['validity'] != fraud_rate)) or (('validity_details' in value) and (value['validity_details'] != validity_details)) : 
-              results_changed = True
-              value['validity'] = fraud_rate
-              value['validity_details'] = validity_details
-
-              if not 'alerts' in value:
-                value['alerts'] = fetch_alerts(value['lat'], value['lon'])
-                affected_doc.set(value)
-
-            # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
-            # affected_doc.set(value)
-            if results_changed :
-            
-              # run origin_enhancement separately
-              water_pct, land_use_anthropic_pct, land_use_primary_vegetation_pct, land_use_secondary_vegetation_or_regrowth_pct = origin_enhancement(float(value.get('lat')), float(value.get('lon')))
-
-              value['water_pct'] = water_pct
-              value['land_use_anthropic_pct'] = land_use_anthropic_pct
-              value['land_use_primary_vegetation_pct'] = land_use_primary_vegetation_pct
-              value['land_use_secondary_vegetation_or_regrowth_pct'] = land_use_secondary_vegetation_or_regrowth_pct
-
-              affected_doc.set(value)
-
-              generate_map_and_upload_to_gcs(float(value.get('lat')), float(value.get('lon')), document_path)
-          else:
-            print('isotopes must contain more than two measurements')
-        else:
-          print(f'1 or more invalid isotopes for oxygen: {oxygen}, carbon {carbon}, nitrogen {nitrogen}')
-      else:
-        print('origin verification can not be executed due to missing fields')
-
+    return collection_path, document_path

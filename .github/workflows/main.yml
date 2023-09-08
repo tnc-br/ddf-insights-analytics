@@ -91,8 +91,8 @@ jobs:
     - name: Use gcloud CLI
       run: gcloud info
     
-    - name: 'Use to deploy a cloud function gen 2: fraud-detection-new-sample'
-      run: gcloud functions deploy fraud-detection-new-sample-sc --gen2 --runtime=python311 --source=./fraud-detection-new-sample --region=southamerica-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.created' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
+    - name: 'Use to deploy a cloud function gen 2: fraud-detection-old-version'
+      run: gcloud functions deploy fraud-detection-old-version-sc --gen2 --runtime=python311 --source=./fraud-detection-old-version --region=southamerica-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
       #--trigger-resource='projects/kazob-370920/databases/(default)/documents/untrusted_samples/{pushId}'
       #--trigger-topic=eventarc-us-east1-fraud-detection-231413-297
     
