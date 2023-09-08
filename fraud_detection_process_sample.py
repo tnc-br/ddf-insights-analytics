@@ -8,8 +8,40 @@ import scipy
 
 ISOSCAPES_EE_PATH = 'projects/kazob-370920/assets/isoscapes'
 
+def fraud_detection_process_sample(value: dict):
+    """
+    Performs fraud detection on a given sample and updates its validity and additional information.
 
-class ttest():
+    Args:
+        value (dict): A dictionary representing the sample to be processed. For keys, see firestore or
+          unit tests for more details.
+
+    Returns:
+        A dictionary representing the sample with updated validity and additional information.
+    """
+    if not('oxygen' in value and 'nitrogen' in value and 'carbon' in value):
+        if not(isinstance(oxygen, Sequence) and isinstance(nitrogen, Sequence) and isinstance(carbon, Sequence)):
+            if not(len(oxygen) >=2 and len(nitrogen) >=2 and len(carbon) >=2):
+                print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
+                return value
+            
+    oxygen = value.get('oxygen')
+    nitrogen = value.get('nitrogen')
+    carbon = value.get('carbon')
+    lat = float(value.get('lat'))
+    lon = float(value.get('lon'))
+    
+    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(lat, lon,oxygen,nitrogen,carbon).evaluate()
+    validity_details = {
+        'p_value_oxygen': p_value_oxygen,
+        'p_value_carbon': p_value_carbon,
+        'p_value_nitrogen': p_value_nitrogen
+    }
+    value['validity'] = fraud_rate
+    value['validity_details'] = validity_details
+    return value
+
+class _ttest():
     """
       A class to perform a t-test on isotope data.
 
