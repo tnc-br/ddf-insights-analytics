@@ -4,9 +4,9 @@ from google.events.cloud import firestore as firestoredata
 # The Firebase Admin SDK to access Cloud Firestore.
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
-from origin_validation import ttest
-from origin_validation_enhancement import origin_enhancement
-from upload_map_to_gcs import generate_map_and_upload_to_gcs
+import fraud_detection_process_sample
+import fraud_detection_fetch_land_use_data
+import fraud_detection_generate_map_and_upload_to_gcs
 import traceback
 from collections.abc import Sequence
 
@@ -53,7 +53,7 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
         # STEP 3: upload a map to GCS showing land use from MapBiomas
         try:
-            generate_map_and_upload_to_gcs(float(value.get('lat')), float(value.get('lon')), document_path)
+            fraud_detection_generate_map_and_upload_to_gcs(float(value.get('lat')), float(value.get('lon')), document_path)
 
         except Exception as e:
             print(f'caught {type(e)} while creating land use map from MapBiomas: e')
@@ -111,59 +111,3 @@ def parse_path_parts(firestore_payload_name: str):
     document_path = "/".join(path_parts[(separator_idx + 2) :])
 
     return collection_path, document_path
-
-def fraud_detection_fetch_land_use_data(value: dict):
-    """
-    Fetches land use data for a given sample location and updates the sample dictionary with the results.
-
-    Args:
-        value (dict): A dictionary representing the sample to be processed. Must contain the following keys:
-            - lat (float): The latitude of the sample location.
-            - lon (float): The longitude of the sample location.
-
-    Returns:
-        None.
-    """
-    water_pct, land_use_anthropic_pct, land_use_primary_vegetation_pct, land_use_secondary_vegetation_or_regrowth_pct = origin_enhancement(float(value.get('lat')), float(value.get('lon')))
-
-    value['water_pct'] = water_pct
-    value['land_use_anthropic_pct'] = land_use_anthropic_pct
-    value['land_use_primary_vegetation_pct'] = land_use_primary_vegetation_pct
-    value['land_use_secondary_vegetation_or_regrowth_pct'] = land_use_secondary_vegetation_or_regrowth_pct
-    
-    return value
-
-def fraud_detection_process_sample(value: dict):
-    """
-    Performs fraud detection on a given sample and updates its validity and additional information.
-
-    Args:
-        value (dict): A dictionary representing the sample to be processed. For keys, see firestore or
-          unit tests for more details.
-
-    Returns:
-        A dictionary representing the sample with updated validity and additional information.
-    """
-    if not('oxygen' in value and 'nitrogen' in value and 'carbon' in value):
-        if not(isinstance(oxygen, Sequence) and isinstance(nitrogen, Sequence) and isinstance(carbon, Sequence)):
-            if not(len(oxygen) >=2 and len(nitrogen) >=2 and len(carbon) >=2):
-                print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
-                return value
-            
-    oxygen = value.get('oxygen')
-    nitrogen = value.get('nitrogen')
-    carbon = value.get('carbon')
-    lat = float(value.get('lat'))
-    lon = float(value.get('lon'))
-    
-    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(lat, lon,oxygen,nitrogen,carbon).evaluate()
-    validity_details = {
-        'p_value_oxygen': p_value_oxygen,
-        'p_value_carbon': p_value_carbon,
-        'p_value_nitrogen': p_value_nitrogen
-    }
-    value['validity'] = fraud_rate
-    value['validity_details'] = validity_details
-    return value
-    
-    

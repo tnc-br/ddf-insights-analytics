@@ -1,7 +1,27 @@
 import ee
-import os
 
-def origin_enhancement(lat: float, lon: float):
+def fraud_detection_fetch_land_use_data(value: dict):
+    """
+    Fetches land use data for a given sample location and updates the sample dictionary with the results.
+
+    Args:
+        value (dict): A dictionary representing the sample to be processed. Must contain the following keys:
+            - lat (float): The latitude of the sample location.
+            - lon (float): The longitude of the sample location.
+
+    Returns:
+        A dictionary representing the sample with updated validity land use data.
+    """
+    water_pct, land_use_anthropic_pct, land_use_primary_vegetation_pct, land_use_secondary_vegetation_or_regrowth_pct = _fraud_detection_fetch_land_use_data(float(value.get('lat')), float(value.get('lon')))
+
+    value['water_pct'] = water_pct
+    value['land_use_anthropic_pct'] = land_use_anthropic_pct
+    value['land_use_primary_vegetation_pct'] = land_use_primary_vegetation_pct
+    value['land_use_secondary_vegetation_or_regrowth_pct'] = land_use_secondary_vegetation_or_regrowth_pct
+
+    return value
+
+def _fraud_detection_fetch_land_use_data(lat: float, lon: float):
     """
     Enhances the origin point with additional information about the surrounding area.
 
