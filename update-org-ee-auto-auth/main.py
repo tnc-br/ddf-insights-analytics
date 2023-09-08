@@ -11,6 +11,8 @@ from cloudevents.http import CloudEvent
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import google.auth
+from google.cloud import storage
+
 
 
 app = initialize_app()
@@ -51,10 +53,20 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
 
 
     def check_org(org_email, org_name):
+
+        #Download service account file
+        # Initialise a client
+        storage_client = storage.Client()
+        # Create a bucket object for our bucket
+        bucket = storage_client.get_bucket("gadmin_credentials")
+        # Create a blob object from the filepath
+        blob = bucket.blob("credentials.json")
+        # Download the file to a destination
+        blob.download_to_filename('/tmp/credentials.json')
         #Google ADMIN
         SCOPES = ["https://www.googleapis.com/auth/cloud-identity.groups", "https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group"]    
 
-        SERVICE_ACCOUNT_FILE = 'credentials.json'
+        SERVICE_ACCOUNT_FILE = '/tmp/credentials.json'
 
         service_account_credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES).with_subject("admin@timberid.org")
 

@@ -34,10 +34,10 @@ def grant_access(cloud_event: CloudEvent) -> None:
   elif is_value and is_old_value : #document modified
     print("document updated")
     user_iam.ungrant_access_new_user()
-    user_iam.grant_access_new_user()
+    user_iam.grant_access_deleted_user()
 
 
     
   elif not is_value and is_old_value : #document deleted
     print("document deleted")
-    user_iam.ungrant_access_new_user()
+    user_iam.ungrant_access_deleted_user()
