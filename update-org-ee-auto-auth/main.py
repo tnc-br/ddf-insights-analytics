@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from cloudevents.http import CloudEvent
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+import google.auth
 
 
 app = initialize_app()
@@ -42,18 +43,8 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
     doc = affected_doc.get()
 
     # Initialize Earth Engine.
-    if os.path.isfile('key.json'):
-
-        # connection to the service account
-        service_account_email = 'earth-engine-sa@river-sky-386919.iam.gserviceaccount.com'
-        credentials = ee.ServiceAccountCredentials(
-            service_account_email, 'key.json')
-        ee.Initialize(credentials)
-        print('initialized with key')
-
-    # if in local env use the local user credential
-    else:
-        ee.Initialize()
+    credentials, project_id = google.auth.default()
+    ee.Initialize(credentials)
 
     # Shared functions
     # TODO ddf common

@@ -9,6 +9,7 @@ import ee
 import time
 import json
 from datetime import datetime
+import google.auth
 
 
 app = initialize_app()
@@ -21,18 +22,9 @@ def etl(request):
         cloud_event: cloud event with information on the firestore event trigger
     """
     # Initialize Earth Engine.
-    if os.path.isfile('key.json'):
-
-        # connection to the service account
-        service_account = 'earth-engine-sa@river-sky-386919.iam.gserviceaccount.com'
-        credentials = ee.ServiceAccountCredentials(
-            service_account, 'key.json')
-        ee.Initialize(credentials)
-        print('initialized with key')
-
-    # if in local env use the local user credential
-    else:
-        ee.Initialize()
+    # Initialize Earth Engine.
+    credentials, project_id = google.auth.default()
+    ee.Initialize(credentials)
 
     # Shared functions
     #TODO ddf common 

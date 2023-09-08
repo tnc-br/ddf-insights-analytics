@@ -3,6 +3,7 @@ import ee
 import os
 import numpy as np
 import scipy
+import google.auth
 
 """Global Variable definition"""
 
@@ -30,18 +31,8 @@ class ttest():
         self.carbon_measurements = carbon_measurements
 
         # Initialize Earth Engine.
-        if os.path.isfile('key.json'):
-
-            # connection to the service account
-            service_account = 'fraud-detection-pipeline-sa@kazob-370920.iam.gserviceaccount.com'
-            credentials = ee.ServiceAccountCredentials(
-                service_account, 'key.json')
-            ee.Initialize(credentials)
-            print('initialized with key')
-
-        # if in local env use the local user credential
-        else:
-            ee.Initialize()
+        credentials, project_id = google.auth.default()
+        ee.Initialize(credentials)
 
         # fetching isoscapes
 
