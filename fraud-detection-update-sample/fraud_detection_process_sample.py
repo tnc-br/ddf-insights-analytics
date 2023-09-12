@@ -82,103 +82,73 @@ class _ttest():
               else:
                   asset_list.append(child_id)
           return asset_list
+        
+        self.oxygen_isoscape = None
+        self.carbon_isoscape = None
+        self.nitrogen_isoscape = None
+        self.p_value_theshold = 0
         asset_list = get_asset_list(ISOSCAPES_EE_PATH)
         for asset in asset_list:
-            if ('oxygen' in asset) and ('mean' in asset):
-                self.oxygen_means_iso = ee.Image(asset)
-            elif 'oxygen' in asset and 'variance' in asset:
-                self.oxygen_variances_iso = ee.Image(asset)
-            elif 'd13C' in asset and 'gdal' in asset:
-                self.carbon_means_iso = ee.Image(asset).select('b1')
-                self.carbon_variances_iso = ee.Image(asset).select('b2')
-            elif 'd15N' in asset and 'SD' in asset:
-                self.nitrogen_variances_iso = ee.Image(asset)
-            elif 'd15N' in asset and 'SD' not in asset:
-                self.nitrogen_means_iso = ee.Image(asset)
+            if 'd18O_isoscape' in asset:
+                self.oxygen_isoscape = ee.Image(asset)
+                self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['p_value'])
+            elif 'd13C_isoscape' in asset:
+                self.carbon_isoscape = ee.Image(asset)
+            elif 'd15N_isoscape' in asset:
+                self.nitrogen_isoscape = ee.Image(asset)
         self.poi = ee.Geometry.Point(lon, lat)
-        # self.carbon_means_iso.getInfo()
+
+    
+    def _calc_p_value(
+            measured_mean,
+            measured_std,
+            num_measurements,
+            poi, 
+            isoscape):
+        isoscape_mean = isoscape.select('b1').reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=poi,
+            scale=30).getInfo().get('b1')
+        isoscape_var = isoscape.select('b2').reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=poi,
+            scale=30).getInfo().get('b1')
+        isoscape_std = np.sqrt(isoscape_var)
+    
+        _, p_value = scipy.stats.ttest_ind_from_stats(
+            measured_mean, measured_std, 
+            num_measurements, isoscape_mean,
+            isoscape_std, 30, 
+            equal_var=False, alternative="two-sided")
+
+        return p_value
 
     def evaluate(self):
-        isoscape_mean = self.oxygen_means_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b1')
-        isoscape_var = self.oxygen_variances_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b1')
-        if isoscape_var is not None:
-            isoscape_std = np.sqrt(isoscape_var)
-        else:
-            isoscape_std = 0
-
-        """Isotope calculation"""
-
-        isotope_mean = np.mean(self.oxygen_measurements)
-        isotope_std = np.std(self.oxygen_measurements)
-        print(isotope_mean, isotope_std, isoscape_mean, isoscape_std)
-
-        """ttest and p-value"""
-
-        _, p_value_oxygen = scipy.stats.ttest_ind_from_stats(
-            isotope_mean, isotope_std, len(self.oxygen_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
-
-        """**Carbon** Isoscape """
-
-        isoscape_mean = self.carbon_means_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b1')
-        isoscape_var = self.carbon_variances_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b2')
-        if isoscape_var is not None:
-            isoscape_std = np.sqrt(isoscape_var)
-        else:
-            isoscape_std = 0
-
-        """Isotope calculation"""
-
-        isotope_mean = np.mean(self.carbon_measurements)
-        isotope_std = np.std(self.carbon_measurements)
-        print(isotope_mean, isotope_std, isoscape_mean, isoscape_std)
-
-        """ttest and p-value"""
-
-        _, p_value_carbon = scipy.stats.ttest_ind_from_stats(
-            isotope_mean, isotope_std, len(self.carbon_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
-
-        """**Nitrogen**
-
-    Isoscape
-    """
-
-        isoscape_mean = self.nitrogen_means_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b1')
-        isoscape_var = self.nitrogen_variances_iso.reduceRegion(
-            reducer=ee.Reducer.mean(),
-            geometry=self.poi,
-            scale=30).getInfo().get('b1')
-        if isoscape_var is not None:
-            isoscape_std = np.sqrt(isoscape_var)
-        else:
-            isoscape_std = 0
-
-        """Isotope calculation"""
-
-        isotope_mean = np.mean(self.nitrogen_measurements)
-        isotope_std = np.std(self.nitrogen_measurements)
-        print(isotope_mean, isotope_std, isoscape_mean, isoscape_std)
-
-        """ttest and p-value"""
-
-        _, p_value_nitrogen = scipy.stats.ttest_ind_from_stats(
-            isotope_mean, isotope_std, len(self.nitrogen_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
-
-        """Origin Verification"""
-
-        origin_validity = p_value_oxygen * p_value_carbon * p_value_nitrogen
-        return origin_validity, p_value_oxygen, p_value_carbon, p_value_nitrogen
+        p_value_oxygen, p_value_carbon, p_value_nitrogen = 1, 1, 1
+        if self.oxygen_isoscape:
+            p_value_oxygen = _calc_p_value(
+                np.mean(self.oxygen_measurements),
+                np.std(self.oxygen_measurements),
+                len(self.oxygen_measurements),
+                self.poi,
+                self.oxygen_isoscape)
+        
+        if self.carbon_isoscape:
+            p_value_carbon = _calc_p_value(
+                np.mean(self.carbon_measurements),
+                np.std(self.carbon_measurements),
+                len(self.carbon_measurements),
+                self.poi,
+                self.carbon_isoscape)
+        
+        if self.nitrogen_isoscape:
+            p_value_nitrogen = _calc_p_value(
+                np.mean(self.nitrogen_measurements),
+                np.std(self.nitrogen_measurements),
+                len(self.nitrogen_measurements),
+                self.poi,
+                self.nitrogen_measurements)
+        
+        combined_p_value = p_value_oxygen * p_value_carbon * p_value_nitrogen
+        is_invalid = combined_p_value <= self.p_value_theshold
+        return is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen
