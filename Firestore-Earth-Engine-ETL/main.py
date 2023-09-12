@@ -46,7 +46,7 @@ def etl(request):
                     asset_list.append(child_id)
         except Exception as e:
             print('can not retreive assets list of ' + parent_name + ' , verify if folder path exists')
-            print (e.message)
+            print (e)
 
         return asset_list
 
@@ -55,7 +55,6 @@ def etl(request):
         for doc in collectionSnapshot:
             #TODO doc should come from an organization that is shared or trusted-org
             raw_value = doc.to_dict()
-            print(doc)
             try:
                 is_lat_lon_valid = False
                 if ('lat' in raw_value) and ('lon' in raw_value):
@@ -65,7 +64,7 @@ def etl(request):
                         is_lat_lon_valid = True
                     except Exception as e:
                         print("lat lon can not be casted into float")
-                        print (e.message)
+                        print (e)
                 if is_lat_lon_valid :
                     if 'org_name' in raw_value:
                         org_name = raw_value['org_name']
@@ -78,7 +77,7 @@ def etl(request):
                         except Exception as e :
                             print('date format is invalid')
                             created_on = ee.Date(datetime.now())
-                            print(e.message)
+                            print(e)
                     else:
                         created_on = ee.Date(datetime.now())
                     value = {}
@@ -96,7 +95,7 @@ def etl(request):
                     print("skipping entry: " + str(doc.id) + " , invalid lat/lon")
             except Exception as e:
                 print("skipping entry: " + + str(doc.id) +  " , invalid untrusted sample format")
-                print(e.message)
+                print(e)
                 #str(raw_value['id'])
 
         return features
@@ -106,32 +105,32 @@ def etl(request):
         for k, v in collection.items():
             org_path = ORG_EE_PATH + '/' + k 
             org_asset_list = get_asset_list(org_path)
+            if org_asset_list != [] :
+                AssetId = org_path + '/' + asset_name
 
-            AssetId = org_path + '/' + asset_name
-
-            #TODO Verify if data didn't change 
-            #TODO Add versionning to assets (allow maximum to ten versions)
-            #TODO Verify if data didn't change 
+                #TODO Verify if data didn't change 
+                #TODO Add versionning to assets (allow maximum to ten versions)
+                #TODO Verify if data didn't change 
 
 
-            if AssetId in org_asset_list:
-                ee.data.deleteAsset(AssetId)
+                if AssetId in org_asset_list:
+                    ee.data.deleteAsset(AssetId)
 
-            task = ee.batch.Export.table.toAsset(**{
-                'collection': ee.FeatureCollection(v),
-                'description': 'firestoreToAssetExample',
-                'assetId': AssetId
-                })
-            task.start()
-            while task.active():
-                print('Polling for task (id: {}).'.format(task.id))
-                time.sleep(5)
+                task = ee.batch.Export.table.toAsset(**{
+                    'collection': ee.FeatureCollection(v),
+                    'description': 'firestoreToAssetExample',
+                    'assetId': AssetId
+                    })
+                task.start()
+                while task.active():
+                    print('Polling for task (id: {}).'.format(task.id))
+                    time.sleep(5)
 
-                
-            print(task.status())
-            org_email = k + "@timberid.org"
-            acl = { "writers": ['group:'+org_email]}
-            ee.data.setAssetAcl(AssetId, acl)
+                    
+                print(task.status())
+                org_email = k + "@timberid.org"
+                acl = { "writers": ['group:'+org_email]}
+                ee.data.setAssetAcl(AssetId, acl)
     client: google.cloud.firestore.Client = firestore.client()
 
     ORG_EE_PATH = 'projects/river-sky-386919/assets/ee_org'
@@ -146,8 +145,10 @@ def etl(request):
 
         save_collection_to_ee(trustedFeatureCollection, "trusted_samples")
 
-    except:
+    except Exception as e:
         print("make sure all items in trusted samples database have all required fields")
+        print(e)
+
 
 
 
@@ -159,8 +160,9 @@ def etl(request):
         save_collection_to_ee(untrustedFeatureCollection, "untrusted_samples")
 
                 
-    except:
+    except Exception as e:
         print("make sure all items in untrusted samples database have all required fields")
+        print(e)
     
         
     return 'done'

@@ -89,7 +89,7 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
             })
             add_request.execute()
             #TODO ADD org folder to earth engine
-            ee.data.createFolder(PARENT_PATH + 'ee_org/' + org_name)
+            ee.data.createAsset({'type': 'Folder'}, PARENT_PATH + 'ee_org/' + org_name)
             print('new org created')
 
     # get list of items in earth engine folder
@@ -162,5 +162,3 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
     #TODO ORGANIZATION DELETED
 
     return "Organizations EE ACL executed"
-
-
