@@ -123,7 +123,7 @@ class UserIam():
         response = request.execute()
         print(response)
     except Exception as e:
-        print(e)
+        print(e.message)
 
 
   def ungrant_access_deleted_user(self):

@@ -102,49 +102,52 @@ def etl(request):
         return features
         #return ee.FeatureCollection(features)
 
+    def save_collection_to_ee(collection, asset_name):
+        for k, v in collection.items():
+            org_path = ORG_EE_PATH + '/' + k 
+            org_asset_list = get_asset_list(org_path)
+
+            AssetId = org_path + '/' + asset_name
+
+            #TODO Verify if data didn't change 
+            #TODO Add versionning to assets (allow maximum to ten versions)
+            #TODO Verify if data didn't change 
+
+
+            if AssetId in org_asset_list:
+                ee.data.deleteAsset(AssetId)
+
+            task = ee.batch.Export.table.toAsset(**{
+                'collection': ee.FeatureCollection(v),
+                'description': 'firestoreToAssetExample',
+                'assetId': AssetId
+                })
+            task.start()
+            while task.active():
+                print('Polling for task (id: {}).'.format(task.id))
+                time.sleep(5)
+
+                
+            print(task.status())
+            org_email = k + "@timberid.org"
+            acl = { "writers": ['group:'+org_email]}
+            ee.data.setAssetAcl(AssetId, acl)
     client: google.cloud.firestore.Client = firestore.client()
 
     ORG_EE_PATH = 'projects/river-sky-386919/assets/ee_org'
 
-    # try:
+    try:
 
-    #     #etl trusted samples 
-    #     #TODO add "d18O of precipitation"
-    #     trusted_schema = ["lat", "lon", "org_name" ,"d18o_cel","d15n_wood","d13c_wood","code","code_lab", "created_on", "date_of_harvest","vpd","mean_annual_temperature","mean_annual_precipitation"]
-    #     trustedCollectionSnapshot = client.collection('trusted_samples').get() #.select(trusted_schema).get()
-    #     trustedFeatureCollection = transform_snapshot_to_featuresCollection(trustedCollectionSnapshot, trusted_schema)
+        #etl trusted samples 
+        #TODO add "d18O of precipitation"
+        trusted_schema = ["lat", "lon", "org_name" ,"d18o_cel","d15n_wood","d13c_wood","code","code_lab", "created_on", "date_of_harvest","vpd","mean_annual_temperature","mean_annual_precipitation"]
+        trustedCollectionSnapshot = client.collection('trusted_samples').get() #.select(trusted_schema).get()
+        trustedFeatureCollection = transform_snapshot_to_featuresCollection(trustedCollectionSnapshot, trusted_schema)
 
+        save_collection_to_ee(trustedFeatureCollection, "trusted_samples")
 
-
-
-    #     for k, v in trustedFeatureCollection.items():
-    #         org_path = ORG_EE_PATH + '/' + k 
-    #         org_asset_list = get_asset_list(org_path)
-
-    #         trustedAssetId = org_path + '/trusted_samples'
-
-    #         #TODO Verify if data didn't change 
-    #         #TODO Add versionning to assets (allow maximum to ten versions)
-    #         #TODO Verify if data didn't change 
-
-
-    #         if trustedAssetId in org_asset_list:
-    #             ee.data.deleteAsset(trustedAssetId)
-
-    #         task = ee.batch.Export.table.toAsset(**{
-    #             'collection': ee.FeatureCollection(v),
-    #             'description': 'firestoreToAssetExample',
-    #             'assetId': trustedAssetId
-    #             })
-    #         task.start()
-    #         while task.active():
-    #             print('Polling for task (id: {}).'.format(task.id))
-    #             time.sleep(5)
-
-                
-    #         print(task.status())
-    # except:
-    #     print("make sure all items in trusted samples database have all required fields")
+    except:
+        print("make sure all items in trusted samples database have all required fields")
 
 
 
@@ -153,35 +156,9 @@ def etl(request):
         untrustedCollectionSnapshot = client.collection('untrusted_samples').get() #.select(untrusted_schema).get()
         untrustedFeatureCollection = transform_snapshot_to_featuresCollection(untrustedCollectionSnapshot, untrusted_schema)
 
-        for k, v in untrustedFeatureCollection.items():
-            org_path = ORG_EE_PATH + '/' + k 
-            org_asset_list = get_asset_list(org_path)
-            print(k)
-            if org_asset_list != []:
-                untrustedAssetId = org_path + '/untrusted_samples'
-
-                #TODO Verify if data didn't change 
-                #TODO Add versionning to assets (allow maximum to ten versions)
-                #TODO Verify if data didn't change 
-
-                if untrustedAssetId in org_asset_list:
-                    ee.data.deleteAsset(untrustedAssetId)
-
-                task = ee.batch.Export.table.toAsset(**{
-                    'collection': ee.FeatureCollection(v),
-                    'description': 'firestoreToAssetExample',
-                    'assetId': untrustedAssetId
-                    })
-                task.start()
-                while task.active():
-                    print('Polling for task (id: {}).'.format(task.id))
-                    time.sleep(5)
-                print(task.status())
+        save_collection_to_ee(untrustedFeatureCollection, "untrusted_samples")
 
                 
-
-
-
     except:
         print("make sure all items in untrusted samples database have all required fields")
     
