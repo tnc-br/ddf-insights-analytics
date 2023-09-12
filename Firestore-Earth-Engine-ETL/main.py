@@ -44,8 +44,9 @@ def etl(request):
                     asset_list.extend(get_asset_list(child_id))
                 else:
                     asset_list.append(child_id)
-        except:
+        except Exception as e:
             print('can not retreive assets list of ' + parent_name + ' , verify if folder path exists')
+            print (e.message)
 
         return asset_list
 
@@ -62,8 +63,9 @@ def etl(request):
                         lat = float(raw_value['lat'])
                         lon = float(raw_value['lon'])
                         is_lat_lon_valid = True
-                    except:
+                    except Exception as e:
                         print("lat lon can not be casted into float")
+                        print (e.message)
                 if is_lat_lon_valid :
                     if 'org_name' in raw_value:
                         org_name = raw_value['org_name']
@@ -73,9 +75,10 @@ def etl(request):
                     if "created_on" in raw_value:
                         try:
                             created_on = ee.Date(raw_value["created_on"])
-                        except :
+                        except Exception as e :
                             print('date format is invalid')
                             created_on = ee.Date(datetime.now())
+                            print(e.message)
                     else:
                         created_on = ee.Date(datetime.now())
                     value = {}
@@ -91,8 +94,9 @@ def etl(request):
                     features.setdefault(org_name,[]).append(feature)
                 else:
                     print("skipping entry: " + str(doc.id) + " , invalid lat/lon")
-            except:
+            except Exception as e:
                 print("skipping entry: " + + str(doc.id) +  " , invalid untrusted sample format")
+                print(e.message)
                 #str(raw_value['id'])
 
         return features
