@@ -10,9 +10,11 @@ from origin_validation import ttest
 from datetime import datetime, timedelta
 
 
+_VALIDATION_PASSED_LABEL = "Possible"
+_VALIDATION_FAILED_LABEL = "Not Likely"
+
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
-
 
 @functions_framework.http
 def reevaluate(request):
@@ -78,7 +80,7 @@ def reevaluate(request):
             is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen  = ttest(
                 value.get('lat'), value.get('lon'), value.get('oxygen'),
                 value.get('nitrogen'), value.get('carbon')).evaluate()
-            value['validity'] = "Not Likely" if is_invalid else "Possible"
+            value['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
             value['p_value'] = combined_p_value
             value['validity_details'] = {
                 'p_value_oxygen': p_value_oxygen,

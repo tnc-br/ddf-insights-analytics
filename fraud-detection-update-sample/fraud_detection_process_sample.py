@@ -8,8 +8,12 @@ import google.auth
 """Global Variable definition"""
 
 ISOSCAPES_EE_PATH = 'projects/kazob-370920/assets/isoscapes'
+
+# If enabled, performs t-test of oxygen cellulose measurements against the values in the d18O_isoscape.
 _ENABLE_d18O_ANALYSIS = True
+# If enabled, performs t-test of carbon cellulose measurements against the values in the d13C_isoscape.
 _ENABLE_d13C_ANALYSIS = False
+# If enabled, performs t-test of nitrogen cellulose measurements against the values in the d15N_isoscape.
 _ENABLE_d15N_ANALYSIS = False
 
 def fraud_detection_process_sample(value: dict):

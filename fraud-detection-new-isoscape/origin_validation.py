@@ -9,6 +9,12 @@ import google.auth
 
 ISOSCAPES_EE_PATH = 'projects/river-sky-386919/assets/isoscapes'
 
+# If enabled, performs t-test of oxygen cellulose measurements against the values in the d18O_isoscape.
+_ENABLE_d18O_ANALYSIS = True
+# If enabled, performs t-test of carbon cellulose measurements against the values in the d13C_isoscape.
+_ENABLE_d13C_ANALYSIS = False
+# If enabled, performs t-test of nitrogen cellulose measurements against the values in the d15N_isoscape.
+_ENABLE_d15N_ANALYSIS = False
 
 class ttest():
     """
@@ -91,7 +97,7 @@ class ttest():
 
     def evaluate(self):
         p_value_oxygen, p_value_carbon, p_value_nitrogen = 1, 1, 1
-        if self.oxygen_isoscape:
+        if self.oxygen_isoscape and _ENABLE_d18O_ANALYSIS:
             p_value_oxygen = self._calc_p_value(
                 np.mean(self.oxygen_measurements),
                 np.std(self.oxygen_measurements),
@@ -99,7 +105,7 @@ class ttest():
                 self.poi,
                 self.oxygen_isoscape)
 
-        if self.carbon_isoscape:
+        if self.carbon_isoscape and _ENABLE_d13C_ANALYSIS:
             p_value_carbon = self._calc_p_value(
                 np.mean(self.carbon_measurements),
                 np.std(self.carbon_measurements),
@@ -107,7 +113,7 @@ class ttest():
                 self.poi,
                 self.carbon_isoscape)
 
-        if self.nitrogen_isoscape:
+        if self.nitrogen_isoscape and _ENABLE_d15N_ANALYSIS:
             p_value_nitrogen = self._calc_p_value(
                 np.mean(self.nitrogen_measurements),
                 np.std(self.nitrogen_measurements),
