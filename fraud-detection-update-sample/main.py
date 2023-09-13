@@ -9,7 +9,7 @@ import fraud_detection_fetch_land_use_data
 import fraud_detection_generate_map_and_upload_to_gcs
 import traceback
 from collections.abc import Sequence
-from fetch_mapbiomas_alerts import fetch_alerts
+import fraud_detection_fetch_mapbiomas_alerts
 
 app = initialize_app()
 
@@ -62,7 +62,7 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
         # STEP 4: query the MapBiomas Alerta API to get alerts near the given (lat,lon)
         try:
-            value = fetch_alerts(float(value.get('lat')), float(value.get('lon')))
+            value = fraud_detection_fetch_mapbiomas_alerts(float(value.get('lat')), float(value.get('lon')))
         except Exception as e:
             print(f'caught {type(e)} while querying the MapBiomas Alerta API: e')
             print(traceback.format_exc())
