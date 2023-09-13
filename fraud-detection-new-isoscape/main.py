@@ -78,7 +78,7 @@ def reevaluate(request):
             is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen  = ttest(
                 value.get('lat'), value.get('lon'), value.get('oxygen'),
                 value.get('nitrogen'), value.get('carbon')).evaluate()
-            value['is_invalid'] = is_invalid
+            value['validity'] = "Not Likely" if is_invalid else "Possible"
             value['p_value'] = combined_p_value
             value['validity_details'] = {
                 'p_value_oxygen': p_value_oxygen,
