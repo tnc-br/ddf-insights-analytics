@@ -1,11 +1,12 @@
 import unittest
 import requests
 import json
-# from fraud_detection_generate_map_and_upload_to_gcs import _fraud_detection_fetch_mapbiomas_alerts
 
 class TestFraudDetectionFetchMapbiomasAlerts(unittest.TestCase):
-    # You can find the API endpoint documentation here (you need to be logged in to see it, register if needed)
-    # https://plataforma.alerta.mapbiomas.org/sign-in?callback_url=/api
+
+    # You can find the API endpoint documentation here: https://plataforma.alerta.mapbiomas.org/sign-in?callback_url=/api
+    # (Uou need to be logged in to see it, register if needed)
+
     def test_mapbiomas_alerta_endpoints_contracts(self):
         url = "https://plataforma.alerta.mapbiomas.org/api/v1/graphql"
 
