@@ -8,6 +8,9 @@ import google.auth
 """Global Variable definition"""
 
 ISOSCAPES_EE_PATH = 'projects/kazob-370920/assets/isoscapes'
+_ENABLE_d18O_ANALYSIS = True
+_ENABLE_d13C_ANALYSIS = False
+_ENABLE_d15N_ANALYSIS = False
 
 def fraud_detection_process_sample(value: dict):
     """
@@ -123,7 +126,7 @@ class _ttest():
 
     def evaluate(self):
         p_value_oxygen, p_value_carbon, p_value_nitrogen = 1, 1, 1
-        if self.oxygen_isoscape:
+        if self.oxygen_isoscape and _ENABLE_d18O_ANALYSIS:
             p_value_oxygen = self._calc_p_value(
                 np.mean(self.oxygen_measurements),
                 np.std(self.oxygen_measurements),
@@ -131,7 +134,7 @@ class _ttest():
                 self.poi,
                 self.oxygen_isoscape)
 
-        if self.carbon_isoscape:
+        if self.carbon_isoscape and _ENABLE_d13C_ANALYSIS:
             p_value_carbon = self._calc_p_value(
                 np.mean(self.carbon_measurements),
                 np.std(self.carbon_measurements),
@@ -139,7 +142,7 @@ class _ttest():
                 self.poi,
                 self.carbon_isoscape)
 
-        if self.nitrogen_isoscape:
+        if self.nitrogen_isoscape and _ENABLE_d15N_ANALYSIS:
             p_value_nitrogen = self._calc_p_value(
                 np.mean(self.nitrogen_measurements),
                 np.std(self.nitrogen_measurements),
