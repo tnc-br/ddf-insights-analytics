@@ -62,7 +62,7 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
         # STEP 4: query the MapBiomas Alerta API to get alerts near the given (lat,lon)
         try:
-            value = fraud_detection_fetch_mapbiomas_alerts(float(value.get('lat')), float(value.get('lon')))
+            value = fraud_detection_fetch_mapbiomas_alerts(value)
         except Exception as e:
             print(f'caught {type(e)} while querying the MapBiomas Alerta API: e')
             print(traceback.format_exc())
