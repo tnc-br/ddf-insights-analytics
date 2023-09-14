@@ -21,10 +21,6 @@ def hello_pubsub(cloud_event):
     credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
     ee.Initialize(credentials)
 
-    land_use_repo_mapbiomas = ee.Image(
-        "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
-    )
-
     # Print out the data from Pub/Sub, to prove that it worked
     document_id = base64.b64decode(cloud_event.data["message"]["data"]).decode()
 
@@ -34,27 +30,18 @@ def hello_pubsub(cloud_event):
     # Check if the document exists
     doc = collection_ref.document(document_id).get()
 
-    mapbiomas_land_use_gee_map = generate_initial_map(land_use_repo_mapbiomas)
+    # load MapBiomas Brazil deforestation / land use dataset
+    land_use_mapbiomas_image = ee.Image(
+        "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
+    )
+    # create the base geemap Map from which other maps will be generated
+    mapbiomas_land_use_base_map = generate_initial_map(land_use_mapbiomas_image)
 
     if doc.exists:
         print(f'Document exists, generating map for {document_id}')
         doc_dict = doc.to_dict()
         if 'lat' in doc_dict and 'lon' in doc_dict:
-            # create a 1 km and 10 km radius buffer around the point
-            radius_1km_buffer, radius_10km_buffer = create_radius_masks(doc_dict['lat'], doc_dict['lon'])
-
-            # create a mask for the 10 km radius buffer with a 10km hole
-            mapbiomas_land_use_gee_map.addLayer(land_use_repo_mapbiomas.mask().geometry().difference(radius_10km_buffer), {}, RADIUS_MASK_10_KM_LAYER_NAME)
-            # add the 1 km radius buffer as a layer
-            mapbiomas_land_use_gee_map.addLayer(radius_1km_buffer, {"color": "white"}, RADIUS_MASK_1_KM_LAYER_NAME)
-            # center the map on the point
-            mapbiomas_land_use_gee_map.centerObject(radius_10km_buffer, 11)
-
-            print(mapbiomas_land_use_gee_map.layers)
-            
-            # generate the html file and upload to GCS
-            filename = generate_html_file_from_map(mapbiomas_land_use_gee_map, document_id)
-            upload_map_to_gcs(filename, document_id)
+            generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], mapbiomas_land_use_base_map, document_id)
         else:
             print(f'Document {document_id} does not contain lat and lon.')
     else:
@@ -65,30 +52,26 @@ def hello_pubsub(cloud_event):
         for doc in docs:
             print(f'Generating map for {doc.id}')
             doc_dict = doc.to_dict()
+            if 'lat' in doc_dict and 'lon' in doc_dict:
+                generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], mapbiomas_land_use_base_map, document_id)
+            else:
+                print(f'Document {document_id} does not contain lat and lon.')    
 
-            # if 'lat' in doc_dict and 'lon' in doc_dict:
-                # create a 1 km and 10 km radius buffer around the point
-                # radius_1km_buffer, radius_10km_buffer = create_radius_masks(doc_dict['lat'], doc_dict['lon'])
-
-                # if mapbiomas_land_use_gee_map.layers
-
-                # # create a mask for the 10 km radius buffer with a 10km hole
-                # mapbiomas_land_use_gee_map.addLayer(land_use_repo_mapbiomas.mask().geometry().difference(radius_10km_buffer), {}, RADIUS_MASK_10_KM_LAYER_NAME)
-                # # add the 1 km radius buffer as a layer
-                # mapbiomas_land_use_gee_map.addLayer(radius_1km_buffer, {"color": "white"}, RADIUS_MASK_1_KM_LAYER_NAME)
-                # # center the map on the point
-                # mapbiomas_land_use_gee_map.centerObject(radius_10km_buffer, 11)
-                
-                # # generate the html file and upload to GCS
-                # filename = generate_html_file_from_map(mapbiomas_land_use_gee_map, document_id)
-                # upload_map_to_gcs(filename, document_id)
-            # else:
-            #     print(f'Document {document_id} does not contain lat and lon.')
-
-def generate_initial_map(land_use_repo_mapbiomas):
+def generate_initial_map(land_use_mapbiomas_image):
+    """
+    Generates an initial map of a given location using the Google Earth Engine (GEE) Python API.
+    
+    Args:
+        lat (float): The latitude of the location in decimal degrees.
+        lon (float): The longitude of the location in decimal degrees.
+        land_use_mapbiomas_image (ee.Image): An `ee.Image` object representing the land use map.
+    
+    Returns:
+        A `geemap.Map` object representing the initial map.
+    """
     # load MapBiomas Brazil deforestation + land use dataset
     land_use_layers_2021_simplified = (
-        land_use_repo_mapbiomas.select("product_2021").divide(100).floor()
+        land_use_mapbiomas_image.select("product_2021").divide(100).floor()
     )
     # display the full land use map
     vis_params = {
@@ -109,25 +92,52 @@ def generate_initial_map(land_use_repo_mapbiomas):
     gee_mapbiomas_map.addLayer(land_use_layers_2021_simplified, vis_params, BRAZIL_LAND_USE_LAYER_NAME)
     return gee_mapbiomas_map
 
-def create_radius_masks(lat, lon):
+def generate_full_map_and_upload_to_gcs(lat, lon, land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id):
     """
-    Creates two circular masks around a given latitude and longitude point using the Google Earth Engine (GEE) Python API.
-
+    Generates a map of a given location using the Google Earth Engine (GEE) Python API and uploads the map to Google Cloud Storage (GCS).
+    
     Args:
-        lat (float): The latitude of the point in decimal degrees.
-        lon (float): The longitude of the point in decimal degrees.
-
+        lat (float): The latitude of the location in decimal degrees.
+        lon (float): The longitude of the location in decimal degrees.
+        land_use_mapbiomas_image (ee.Image): An `ee.Image` object representing the land use map.
+        mapbiomas_land_use_base_map (geemap.Map): A `geemap.Map` object representing the base map.
+        document_id (str): The ID of the Firestore document.
+    
     Returns:
-        A tuple of two ee.Geometry circular buffers, 1 km radius and 10 km radius.
+        None
     """
+    # create a 1 km and 10 km radius buffer around the point
     point = ee.Geometry.Point(lon, lat)
     radius_1km_buffer = point.buffer(1000)
     radius_10km_buffer = point.buffer(10000)
 
-    return radius_1km_buffer, radius_10km_buffer
+    if len(mapbiomas_land_use_base_map.layers) > 2:
+        mapbiomas_land_use_base_map.remove_ee_layer(RADIUS_MASK_1_KM_LAYER_NAME)
+        mapbiomas_land_use_base_map.remove_ee_layer(RADIUS_MASK_10_KM_LAYER_NAME)
 
+    # create a mask for the 10 km radius buffer with a 10km hole
+    mapbiomas_land_use_base_map.addLayer(land_use_mapbiomas_image.mask().geometry().difference(radius_10km_buffer), {}, RADIUS_MASK_10_KM_LAYER_NAME)
+    # add the 1 km radius buffer as a layer
+    mapbiomas_land_use_base_map.addLayer(radius_1km_buffer, {"color": "white"}, RADIUS_MASK_1_KM_LAYER_NAME)
+    # center the map on the point
+    mapbiomas_land_use_base_map.centerObject(radius_10km_buffer, 11)
+    
+    # generate the html file and upload to GCS
+    filename = generate_html_file_from_map(mapbiomas_land_use_base_map, document_id)
+    upload_map_to_gcs(filename, document_id)
 
 def generate_html_file_from_map(gee_mapbiomas_map, document_id):
+    """
+    Generates an HTML file from a Google Earth Engine (GEE) map and saves it to disk.
+    
+    Args:
+        gee_map (geemap.Map): A `geemap.Map` object representing the map to convert to HTML.
+        document_id (str): The ID of the Firestore document.
+    
+    Returns:
+        The full filename of the generated HTML file.
+    """
+
     download_dir = os.getcwd()
     html_file = os.path.join(download_dir, f"{document_id}.html")
     gee_mapbiomas_map.to_html(
@@ -136,6 +146,16 @@ def generate_html_file_from_map(gee_mapbiomas_map, document_id):
     return html_file
 
 def upload_map_to_gcs(html_file, document_id):
+    """
+    Uploads an HTML file to Google Cloud Storage (GCS).
+    
+    Args:
+        html_file (str): The full filename of the HTML file to upload.
+        document_id (str): The ID of the Firestore document.
+    
+    Returns:
+        None
+    """
     storage_client = storage.Client()
     bucket = storage_client.bucket("timberid-maps")
     blob = bucket.blob(document_id)
