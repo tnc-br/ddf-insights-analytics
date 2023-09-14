@@ -2,7 +2,7 @@ import base64
 import functions_framework
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
-from google.cloud import storage, firestore
+from google.cloud import storage
 from google.auth import compute_engine
 import ee
 import geemap
