@@ -66,7 +66,7 @@ def hello_pubsub(cloud_event):
             print(f'Generating map for {doc.id}')
             doc_dict = doc.to_dict()
 
-            if 'lat' in doc_dict and 'lon' in doc_dict:
+            # if 'lat' in doc_dict and 'lon' in doc_dict:
                 # create a 1 km and 10 km radius buffer around the point
                 # radius_1km_buffer, radius_10km_buffer = create_radius_masks(doc_dict['lat'], doc_dict['lon'])
 
@@ -82,8 +82,8 @@ def hello_pubsub(cloud_event):
                 # # generate the html file and upload to GCS
                 # filename = generate_html_file_from_map(mapbiomas_land_use_gee_map, document_id)
                 # upload_map_to_gcs(filename, document_id)
-            else:
-                print(f'Document {document_id} does not contain lat and lon.')
+            # else:
+            #     print(f'Document {document_id} does not contain lat and lon.')
 
 def generate_initial_map(land_use_repo_mapbiomas):
     # load MapBiomas Brazil deforestation + land use dataset
