@@ -1,8 +1,7 @@
 from cloudevents.http import CloudEvent
 import functions_framework
 from google.events.cloud import firestore as firestoredata
-import google.cloud.firestore
-from firebase_admin import initialize_app, firestore
+from firebase_admin import initialize_app
 from iam import UserIam
 
 

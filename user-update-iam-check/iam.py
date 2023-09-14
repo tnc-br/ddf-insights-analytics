@@ -84,11 +84,14 @@ class UserIam():
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      add_request = self.service.members().insert(groupKey = org_email, body = member)
-      requests.append(add_request)
+      if (org_email != None) and (org_email != "") : 
+        print("org email is ")
+        print(org_email)
+        add_request = self.service.members().insert(groupKey = org_email, body = member)
+        requests.append(add_request)
 
     for request in requests:
-      run_request(request)
+      self.run_request(request)
 
   def curr_value(self):
     path_parts = self.firestore_payload.value.name.split("/")
@@ -119,8 +122,8 @@ class UserIam():
     try:
         response = request.execute()
         print(response)
-    except ValueError:
-        print(ValueError)
+    except Exception as e:
+        print(e)
 
 
   def ungrant_access_deleted_user(self):
@@ -140,8 +143,11 @@ class UserIam():
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      add_request = self.service.members().delete(groupKey = org_email, memberKey = email)
-      requests.append(add_request)
+      if (org_email != None) and (org_email != "") : 
+        add_request = self.service.members().delete(groupKey = org_email, memberKey = email)
+        print("org email is ")
+        print(org_email)
+        requests.append(add_request)
 
     for request in requests:
-      run_request(request)
+      self.run_request(request)
