@@ -97,7 +97,7 @@ class _ttest():
         for asset in asset_list:
             if 'd18O_isoscape' in asset:
                 self.oxygen_isoscape = ee.Image(asset)
-                self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['p_value'])
+                self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
             elif 'd13C_isoscape' in asset:
                 self.carbon_isoscape = ee.Image(asset)
             elif 'd15N_isoscape' in asset:
@@ -123,7 +123,7 @@ class _ttest():
         _, p_value = scipy.stats.ttest_ind_from_stats(
             measured_mean, measured_std,
             num_measurements, isoscape_mean,
-            isoscape_std, 30,
+            isoscape_std, 5,
             equal_var=False, alternative="two-sided")
 
         return p_value
