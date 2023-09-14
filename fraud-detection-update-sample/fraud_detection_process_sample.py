@@ -4,6 +4,7 @@ import os
 import numpy as np
 import scipy
 import google.auth
+from typing import Sequence
 
 """Global Variable definition"""
 
@@ -16,38 +17,8 @@ _ENABLE_d13C_ANALYSIS = False
 # If enabled, performs t-test of nitrogen cellulose measurements against the values in the d15N_isoscape.
 _ENABLE_d15N_ANALYSIS = False
 
-def fraud_detection_process_sample(value: dict):
-    """
-    Performs fraud detection on a given sample and updates its validity and additional information.
-
-    Args:
-        value (dict): A dictionary representing the sample to be processed. For keys, see firestore or
-          unit tests for more details.
-
-    Returns:
-        A dictionary representing the sample with updated validity and additional information.
-    """
-    if not('oxygen' in value and 'nitrogen' in value and 'carbon' in value):
-        if not(isinstance(oxygen, Sequence) and isinstance(nitrogen, Sequence) and isinstance(carbon, Sequence)):
-            if not(len(oxygen) >=2 and len(nitrogen) >=2 and len(carbon) >=2):
-                print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
-                return value
-            
-    oxygen = value.get('oxygen')
-    nitrogen = value.get('nitrogen')
-    carbon = value.get('carbon')
-    lat = float(value.get('lat'))
-    lon = float(value.get('lon'))
-    
-    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(lat, lon,oxygen,nitrogen,carbon).evaluate()
-    validity_details = {
-        'p_value_oxygen': p_value_oxygen,
-        'p_value_carbon': p_value_carbon,
-        'p_value_nitrogen': p_value_nitrogen
-    }
-    value['validity'] = fraud_rate
-    value['validity_details'] = validity_details
-    return value
+_VALIDATION_PASSED_LABEL = "Possible"
+_VALIDATION_FAILED_LABEL = "Not Likely"
 
 class _ttest():
     """
@@ -157,3 +128,50 @@ class _ttest():
         combined_p_value = p_value_oxygen * p_value_carbon * p_value_nitrogen
         is_invalid = combined_p_value <= self.p_value_theshold
         return is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen
+
+def fraud_detection_process_sample(doc: dict):
+    """
+    Performs fraud detection on a given sample and updates its validity and additional information.
+
+    Args:
+        sample_measurements(dict): A dictionary representing the sample to be processed. For keys, see firestore or
+          unit tests for more details.
+
+    Returns:
+        A dictionary representing the sample with updated validity and additional information.
+    """
+    if not('oxygen' in doc and 'nitrogen' in doc and 'carbon' in doc):
+      print("Missing input data, skipping fraud detection. Sample must contain oxygen, nitrogen and carbon measurements.")
+      return doc
+
+    oxygen_measurements = doc['oxygen']
+    nitrogen_measurements = doc['nitrogen']
+    carbon_measurements = doc['carbon']
+    
+    if not(isinstance(oxygen_measurements, Sequence) and isinstance(nitrogen_measurements, Sequence) and isinstance(carbon_measurements, Sequence)):
+      print("Missing input data, skipping fraud detection. Oxygen, nitrogen and carbon measurements must be in list form.")
+      return doc
+
+    if not(len(oxygen_measurements) >=2 and len(nitrogen_measurements) >=2 and len(carbon_measurements) >=2):
+      print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
+      return doc
+            
+
+    lat = float(doc['lat'])
+    lon = float(doc['lon'])
+    
+    is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen = _ttest(
+        lat, lon,
+        oxygen_measurements, 
+        nitrogen_measurements,
+        carbon_measurements).evaluate()
+    
+    validity_details = {
+        'p_value_oxygen': p_value_oxygen,
+        'p_value_carbon': p_value_carbon,
+        'p_value_nitrogen': p_value_nitrogen
+    }
+    doc['p_value'] = combined_p_value
+    doc['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
+    doc['validity_details'] = validity_details
+    return doc
