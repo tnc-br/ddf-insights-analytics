@@ -4,14 +4,20 @@ from google.events.cloud import firestore as firestoredata
 # The Firebase Admin SDK to access Cloud Firestore.
 from firebase_admin import initialize_app, firestore
 import google.cloud.firestore
-import fraud_detection_process_sample
-import fraud_detection_fetch_land_use_data
-import fraud_detection_generate_map_and_upload_to_gcs
+from fraud_detection_process_sample import fraud_detection_process_sample
+from fraud_detection_fetch_land_use_data import fraud_detection_fetch_land_use_data
+from fraud_detection_generate_map_and_upload_to_gcs import fraud_detection_generate_map_and_upload_to_gcs
+from fraud_detection_fetch_mapbiomas_alerts import fraud_detection_fetch_mapbiomas_alerts
 import traceback
 from collections.abc import Sequence
-import fraud_detection_fetch_mapbiomas_alerts
+from google.protobuf.json_format import MessageToDict
+from google.auth import compute_engine
+import ee
 
 app = initialize_app()
+
+# Fields that are not inputs to the fraud detection, and should not trigger a re-run
+output_fields = set(["validity", "validity_details", "water_pct", "land_use_anthropic_pct", "land_use_primary_vegetation_pct", "land_use_secondary_vegetation_or_regrowth_pct", "alerts"])
 
 @functions_framework.cloud_event
 def hello_firestore(cloud_event: CloudEvent) -> None:
@@ -30,9 +36,17 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     client: google.cloud.firestore.Client = firestore.client()
     affected_doc = client.collection(collection_path).document(document_path)
 
-    if not is_document_creation_or_update_with_new_inputs(firestore_payload.old_value, firestore_payload.value):
-        print("No inputs have changed, skipping")
-        return
+    # Checks whether Firestore document is new or whether its input fields have been updated
+    firestore_payload_dict = MessageToDict(firestore_payload._pb)
+    if "updateMask" in firestore_payload_dict:
+        update_mask_inputs_only = set(firestore_payload_dict["updateMask"]["fieldPaths"]) - output_fields
+        if len(update_mask_inputs_only) == 0:
+            print("No inputs have changed, skipping")
+            return
+
+    # Authenticate to Earth Engine using service account creds
+    credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
+    ee.Initialize(credentials)
     
     value = affected_doc.get().to_dict()
     
@@ -70,30 +84,6 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
     # Finally: update the Firestore document with the validity and additional information
     # see https://github.com/googleapis/python-firestore/blob/main/google/cloud/firestore_v1/document.py
     affected_doc.set(value)
-
-def is_document_creation_or_update_with_new_inputs(old_value, new_value) -> bool:
-    """Checks whether a Firestore document is new or whether its input fields have been updated.
-    Args:
-        old_value: A dictionary representing the fields and their values of the Firestore document before the update. None if this is a document creation.
-        new_value: A dictionary representing the fields and their values of the Firestore document after the update.
-    Returns:
-        True if this is a document creation or a document update with input fields have been updated. False if this is a document update where only output fields have changed.
-    """
-    if old_value:
-        # Clear all the "output" fields, to verify whether the inputs have changed
-        output_fields = ["validity", "validity_details", "water_pct", "land_use_anthropic_pct", "land_use_primary_vegetation_pct", "land_use_secondary_vegetation_or_regrowth_pct", "alerts"]
-        new_value_without_outputs = new_value.copy()
-        old_value_without_outputs = old_value.copy()
-
-        for field in output_fields:
-            if field in old_value_without_outputs:
-                old_value_without_outputs.pop(field, None)
-            if field in new_value_without_outputs:
-                new_value_without_outputs.pop(field, None)
-                
-        return not new_value_without_outputs == old_value_without_outputs
-    return True
-
 
 def parse_path_parts(firestore_payload_name: str):
     """
