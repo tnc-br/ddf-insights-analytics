@@ -30,7 +30,7 @@ def etl(request):
     #TODO ddf common 
 
     #get list of items in earth engine folder
-    def get_asset_list(parent_name) -> list:
+    def get_asset_list(parent_name):
         asset_list = []
         try:
             parent_asset = ee.data.getAsset(parent_name)
@@ -47,10 +47,11 @@ def etl(request):
         except Exception as e:
             print('can not retreive assets list of ' + parent_name + ' , verify if folder path exists')
             print (e)
+            return "NaN"
 
         return asset_list
 
-    def transform_snapshot_to_featuresCollection(collectionSnapshot, schema) -> dict :
+    def transform_snapshot_to_featuresCollection_trusted(collectionSnapshot) -> dict :
         features = {}
         for doc in collectionSnapshot:
             #TODO doc should come from an organization that is shared or trusted-org
@@ -66,7 +67,55 @@ def etl(request):
                         print("lat lon can not be casted into float")
                         print (e)
                 if is_lat_lon_valid :
-                    if 'org_name' in raw_value:
+                    if 'org_name' in raw_value and raw_value['org_name'] != "":
+                        org_name = raw_value['org_name'].lower()
+                    else:
+                        org_name = 'no-org'
+                        raw_value['org_name'] = org_name
+                    if "created_on" in raw_value:
+                        try:
+                            created_on = ee.Date(raw_value["created_on"])
+                        except Exception as e :
+                            print('date format is invalid')
+                            created_on = ee.Date(datetime.now())
+                            print(e)
+                    else:
+                        created_on = ee.Date(datetime.now())
+                    if 'points' in raw_value:
+                        for point in raw_value['points']:
+                            value = point
+                            new_dict = {k: str(v) for k, v in value.items()}
+                            feature = ee.Feature(ee.Geometry.Point(lon, lat), new_dict)
+                            feature.set('system:time_start', created_on)
+                            features.setdefault(org_name,[]).append(feature)
+                   
+                else:
+                    print("skipping entry: " + str(doc.id) + " , invalid lat/lon")
+            except Exception as e:
+                print("skipping entry: " + + str(doc.id) +  " , invalid untrusted sample format")
+                print(e)
+                #str(raw_value['id'])
+
+        return features
+        #return ee.FeatureCollection(features)
+
+    def transform_snapshot_to_featuresCollection_untrusted(collectionSnapshot, schema) -> dict :
+        features = {}
+        for doc in collectionSnapshot:
+            #TODO doc should come from an organization that is shared or trusted-org
+            raw_value = doc.to_dict()
+            try:
+                is_lat_lon_valid = False
+                if ('lat' in raw_value) and ('lon' in raw_value):
+                    try:
+                        lat = float(raw_value['lat'])
+                        lon = float(raw_value['lon'])
+                        is_lat_lon_valid = True
+                    except Exception as e:
+                        print("lat lon can not be casted into float")
+                        print (e)
+                if is_lat_lon_valid :
+                    if 'org_name' in raw_value  and raw_value['org_name'] != "":
                         org_name = raw_value['org_name']
                     else:
                         org_name = 'no-org'
@@ -101,11 +150,12 @@ def etl(request):
         return features
         #return ee.FeatureCollection(features)
 
+
     def save_collection_to_ee(collection, asset_name):
         for k, v in collection.items():
-            org_path = ORG_EE_PATH + '/' + k 
+            org_path = ORG_EE_PATH + '/' + k.lower()
             org_asset_list = get_asset_list(org_path)
-            if org_asset_list != [] :
+            if org_asset_list != "NaN" :
                 AssetId = org_path + '/' + asset_name
 
                 #TODO Verify if data didn't change 
@@ -128,7 +178,7 @@ def etl(request):
 
                     
                 print(task.status())
-                org_email = k + "@timberid.org"
+                org_email = k.lower() + "@timberid.org"
                 acl = { "writers": ['group:'+org_email]}
                 ee.data.setAssetAcl(AssetId, acl)
     client: google.cloud.firestore.Client = firestore.client()
@@ -139,9 +189,9 @@ def etl(request):
 
         #etl trusted samples 
         #TODO add "d18O of precipitation"
-        trusted_schema = ["lat", "lon", "org_name" ,"d18o_cel","d15n_wood","d13c_wood","code","code_lab", "created_on", "date_of_harvest","vpd","mean_annual_temperature","mean_annual_precipitation"]
+        trusted_schema = ["lat", "lon", "points", "created_on", "org_name"] # ,"d18o_cel","d15n_wood","d13c_wood","code","code_lab",  "date_of_harvest","vpd","mean_annual_temperature","mean_annual_precipitation"]
         trustedCollectionSnapshot = client.collection('trusted_samples').get() #.select(trusted_schema).get()
-        trustedFeatureCollection = transform_snapshot_to_featuresCollection(trustedCollectionSnapshot, trusted_schema)
+        trustedFeatureCollection = transform_snapshot_to_featuresCollection_trusted(trustedCollectionSnapshot)
 
         save_collection_to_ee(trustedFeatureCollection, "trusted_samples")
 
@@ -155,7 +205,7 @@ def etl(request):
     try:
         untrusted_schema = ["lat", "lon" ,"carbon","nitrogen","oxygen","validity","validity_details", "created_on", "date_of_harvest", "org_name"]
         untrustedCollectionSnapshot = client.collection('untrusted_samples').get() #.select(untrusted_schema).get()
-        untrustedFeatureCollection = transform_snapshot_to_featuresCollection(untrustedCollectionSnapshot, untrusted_schema)
+        untrustedFeatureCollection = transform_snapshot_to_featuresCollection_untrusted(untrustedCollectionSnapshot, untrusted_schema)
 
         save_collection_to_ee(untrustedFeatureCollection, "untrusted_samples")
 
