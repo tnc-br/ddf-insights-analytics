@@ -8,6 +8,8 @@ import ee
 from dateutil import parser
 from origin_validation import ttest
 from datetime import datetime, timedelta
+from google.auth import compute_engine
+
 
 
 _VALIDATION_PASSED_LABEL = "Possible"
@@ -19,18 +21,9 @@ root = path.dirname(path.abspath(__file__))
 @functions_framework.http
 def reevaluate(request):
     # Initialize Earth Engine.
-    if os.path.isfile('key.json'):
-
-        # connection to the service account
-        service_account = 'earth-engine-sa@river-sky-386919.iam.gserviceaccount.com'
-        credentials = ee.ServiceAccountCredentials(
-            service_account, 'key.json')
-        ee.Initialize(credentials)
-        print('initialized with key')
-
-    # if in local env use the local user credential
-    else:
-        ee.Initialize()
+    # Authenticate to Earth Engine using service account creds
+    credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
+    ee.Initialize(credentials)
 
     # Shared functions
     # TODO ddf common
@@ -64,7 +57,7 @@ def reevaluate(request):
 
     client: google.cloud.firestore.Client = firestore.client()
 
-    ISOSCAPES_EE_PATH = 'projects/river-sky-386919/assets/isoscapes'
+    ISOSCAPES_EE_PATH = 'projects/timberid-prd/assets/isoscapes'
 
     # etl untrusted samples
     asset_list, update = get_asset_list(ISOSCAPES_EE_PATH)

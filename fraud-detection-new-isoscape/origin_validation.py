@@ -7,7 +7,7 @@ import google.auth
 
 """Global Variable definition"""
 
-ISOSCAPES_EE_PATH = 'projects/river-sky-386919/assets/isoscapes'
+ISOSCAPES_EE_PATH = 'projects/timberid-prd/assets/isoscapes'
 
 # If enabled, performs t-test of oxygen cellulose measurements against the values in the d18O_isoscape.
 _ENABLE_d18O_ANALYSIS = True

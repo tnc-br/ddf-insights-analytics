@@ -17,7 +17,7 @@ from google.cloud import storage
 
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
-PARENT_PATH = 'projects/river-sky-386919/assets/'
+PARENT_PATH = 'projects/timberid-prd/assets/'
 
 
 @functions_framework.cloud_event

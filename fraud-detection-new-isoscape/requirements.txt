@@ -9,3 +9,4 @@ firebase-admin
 scipy
 pandas
 numpy
+google-auth
