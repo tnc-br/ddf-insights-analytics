@@ -1,6 +1,12 @@
 import unittest
+import os
+import sys
+from json_test_data import *
+
+# Allows import of ../../main.py
+parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(parent_dir)
 from main import *
-from tests.json_test_data import *
 
 class TestMain(unittest.TestCase):
     def test_parse_path_parts(self):
