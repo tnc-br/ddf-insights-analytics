@@ -10,9 +10,17 @@ import os
 
 app = initialize_app()
 
+# Google Cloud Storage bucket name and folder name
+GCS_BUCKET_NAME = "timberid-public-to-internet"
+GCS_FOLDER_NAME = "timberid-maps"
+
+# Names of layers in geemap
 RADIUS_MASK_1_KM_LAYER_NAME = "1 km radius mask"
 RADIUS_MASK_10_KM_LAYER_NAME = "10 km radius mask"
 BRAZIL_LAND_USE_LAYER_NAME = "Brazil Land Use"
+
+# https://gee-community-catalog.org/projects/mapbiomas/
+MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE =  "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
 
 # Triggered from a message on a Cloud Pub/Sub topic.
 @functions_framework.cloud_event
@@ -31,9 +39,7 @@ def hello_pubsub(cloud_event):
     doc = collection_ref.document(document_id).get()
 
     # load MapBiomas Brazil deforestation / land use dataset
-    land_use_mapbiomas_image = ee.Image(
-        "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
-    )
+    land_use_mapbiomas_image = ee.Image(MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE)
     # create the base geemap Map from which other maps will be generated
     mapbiomas_land_use_base_map = generate_initial_map(land_use_mapbiomas_image)
 
@@ -41,7 +47,7 @@ def hello_pubsub(cloud_event):
         print(f'Document exists, generating map for {document_id}')
         doc_dict = doc.to_dict()
         if 'lat' in doc_dict and 'lon' in doc_dict:
-            generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], mapbiomas_land_use_base_map, document_id)
+            generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
         else:
             print(f'Document {document_id} does not contain lat and lon.')
     else:
@@ -51,9 +57,10 @@ def hello_pubsub(cloud_event):
         # Iterate over the documents and print their IDs and data
         for doc in docs:
             print(f'Generating map for {doc.id}')
+            document_id = doc.id
             doc_dict = doc.to_dict()
             if 'lat' in doc_dict and 'lon' in doc_dict:
-                generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], mapbiomas_land_use_base_map, document_id)
+                generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
             else:
                 print(f'Document {document_id} does not contain lat and lon.')    
 
@@ -157,6 +164,6 @@ def upload_map_to_gcs(html_file, document_id):
         None
     """
     storage_client = storage.Client()
-    bucket = storage_client.bucket("timberid-maps")
-    blob = bucket.blob(document_id)
+    bucket = storage_client.bucket(GCS_BUCKET_NAME)
+    blob = bucket.blob(GCS_FOLDER_NAME + "/" + document_id)
     blob.upload_from_filename(html_file)
