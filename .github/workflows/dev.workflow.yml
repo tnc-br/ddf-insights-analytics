@@ -1,0 +1,42 @@
+name: Dev Deployment
+
+# on commit push, run job
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  run:
+    # worker runs on latest ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Login
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
+        service_account_email: ${{ secrets.DEV_GCP_EMAIL }}
+        service_account_key: ${{ secrets.DEV_GCP_CREDENTIALS }}
+    
+    - name: 'Set up Cloud SDK'
+      uses: google-github-actions/setup-gcloud@v0
+ 
+    - name: Use gcloud CLI
+      run: gcloud info
+ 
+    - name: 'Use to deploy a cloud function gen 2: fraud-detection-update-sample'
+      run: gcloud functions deploy fraud-detection-update-sample-sc --gen2 --runtime=python311 --source=./fraud-detection-update-sample --region=southamerica-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
+    
+    - name: 'Use to deploy a cloud function gen 2: Firestore-Earth-Engine-ETL'
+      run: gcloud functions deploy Firestore-Earth-Engine-ETL-sc --gen2 --runtime=python311 --timeout=3600s --source=./Firestore-Earth-Engine-ETL --region=southamerica-east1 --entry-point=etl --trigger-http
+    
+    - name: 'Use to deploy a cloud function gen 2: fraud-detection-new-isoscape'
+      run: gcloud functions deploy fraud-detection-new-isoscape-sc --gen2 --runtime=python311 --timeout=3600s --source=./fraud-detection-new-isoscape --region=southamerica-east1 --entry-point=reevaluate --trigger-http
+        
+    - name: 'Use to deploy a cloud function gen 2: update-org-ee-auto-auth'
+      run: gcloud functions deploy update-org-ee-auto-auth-sc --gen2 --runtime=python311 --source=./update-org-ee-auto-auth --region=southamerica-east1 --entry-point=update_ee_acl --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=organizations/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
+        
+    - name: 'Use to deploy a cloud function gen 2: user-update-iam-check'
+      run: gcloud functions deploy user-update-iam-check-sc --gen2 --runtime=python311 --source=./user-update-iam-check --region=southamerica-east1 --entry-point=grant_access --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=users/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
