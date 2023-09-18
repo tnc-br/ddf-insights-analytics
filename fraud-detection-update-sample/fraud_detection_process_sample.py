@@ -140,13 +140,13 @@ def fraud_detection_process_sample(doc: dict):
     Returns:
         A dictionary representing the sample with updated validity and additional information.
     """
-    if not('oxygen' in doc and 'nitrogen' in doc and 'carbon' in doc):
+    if not('d18O_cel' in doc and 'd15N_cel' in doc and 'd13C_cel' in doc):
       print("Missing input data, skipping fraud detection. Sample must contain oxygen, nitrogen and carbon measurements.")
       return doc
-
-    oxygen_measurements = doc['oxygen']
-    nitrogen_measurements = doc['nitrogen']
-    carbon_measurements = doc['carbon']
+    
+    oxygen_measurements = doc['d18O_cel']
+    nitrogen_measurements = doc['d15N_cel']
+    carbon_measurements = doc['d13C_cel']
     
     if not(isinstance(oxygen_measurements, Sequence) and isinstance(nitrogen_measurements, Sequence) and isinstance(carbon_measurements, Sequence)):
       print("Missing input data, skipping fraud detection. Oxygen, nitrogen and carbon measurements must be in list form.")
