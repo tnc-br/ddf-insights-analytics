@@ -68,7 +68,7 @@ class _ttest():
         for asset in asset_list:
             if 'd18O_isoscape' in asset:
                 self.oxygen_isoscape = ee.Image(asset)
-                self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['reference_isoscape_name']
+                self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['REFERENCE_ISOSCAPE_NAME']
                 self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
                 self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
             elif 'd13C_isoscape' in asset:
