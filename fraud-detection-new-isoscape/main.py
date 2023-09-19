@@ -9,6 +9,11 @@ from dateutil import parser
 from origin_validation import ttest
 from datetime import datetime, timedelta
 
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
+
+# The path to the isoscapes folder in Earth Engine.
+ISOSCAPES_EE_PATH = f'projects/{GCP_PROJECT_ID}/assets/isoscapes'
 
 _VALIDATION_PASSED_LABEL = "Possible"
 _VALIDATION_FAILED_LABEL = "Not Likely"
@@ -63,8 +68,6 @@ def reevaluate(request):
         return ee.FeatureCollection(features)
 
     client: google.cloud.firestore.Client = firestore.client()
-
-    ISOSCAPES_EE_PATH = 'projects/river-sky-386919/assets/isoscapes'
 
     # etl untrusted samples
     asset_list, update = get_asset_list(ISOSCAPES_EE_PATH)
