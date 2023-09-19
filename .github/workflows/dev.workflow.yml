@@ -27,7 +27,7 @@ jobs:
       run: gcloud info
  
     - name: 'Use to deploy a cloud function gen 2: fraud-detection-update-sample'
-      run: gcloud functions deploy fraud-detection-update-sample-sc --gen2 --runtime=python311 --source=./fraud-detection-update-sample --region=southamerica-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' 
+      run: gcloud functions deploy fraud-detection-update-sample-sc --gen2 --runtime=python311 --source=./fraud-detection-update-sample --region=southamerica-east1 --entry-point=hello_firestore --trigger-event-filters='type=google.cloud.firestore.document.v1.written' --trigger-event-filters='database=(default)' --trigger-event-filters-path-pattern='document=untrusted_samples/{pushId}' --trigger-location=southamerica-east1 --trigger-service-account='843836318122-compute@developer.gserviceaccount.com' --set-env-vars GCP_PROJECT_ID='river-sky-386919'
     
     - name: 'Use to deploy a cloud function gen 2: Firestore-Earth-Engine-ETL'
       run: gcloud functions deploy Firestore-Earth-Engine-ETL-sc --gen2 --runtime=python311 --timeout=3600s --source=./Firestore-Earth-Engine-ETL --region=southamerica-east1 --entry-point=etl --trigger-http
