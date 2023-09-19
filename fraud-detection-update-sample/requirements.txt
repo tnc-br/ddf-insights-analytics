@@ -12,3 +12,4 @@ ee
 geemap
 geopy
 protobuf
+google-cloud-pubsub

@@ -68,7 +68,7 @@ def hello_firestore(cloud_event: CloudEvent) -> None:
 
         # STEP 3: upload a map to GCS showing land use from MapBiomas
         try:
-            fraud_detection_generate_map_and_upload_to_gcs(float(value.get('lat')), float(value.get('lon')), document_path)
+            fraud_detection_generate_map_and_upload_to_gcs(document_path)
 
         except Exception as e:
             print(f'caught {type(e)} while creating land use map from MapBiomas: e')
