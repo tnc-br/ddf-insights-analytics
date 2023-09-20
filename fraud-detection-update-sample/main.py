@@ -28,7 +28,7 @@ OUTPUT_FIELDS = set([
 ])
 
 @functions_framework.cloud_event
-def hello_firestore(cloud_event: CloudEvent) -> None:
+def evaluate(cloud_event: CloudEvent) -> None:
     """Triggers by a change to a Firestore document.
     Args:
         cloud_event: cloud event with information on the firestore event trigger

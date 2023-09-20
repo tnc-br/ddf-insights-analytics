@@ -13,3 +13,4 @@ geemap
 geopy
 protobuf
 google-cloud-pubsub
+google-auth

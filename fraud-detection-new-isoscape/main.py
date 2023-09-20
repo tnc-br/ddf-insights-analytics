@@ -6,8 +6,8 @@ import os
 from os import path
 import ee
 from dateutil import parser
-from origin_validation import ttest
 from datetime import datetime, timedelta
+from google.auth import compute_engine
 
 # Get function environment variable for GCP project ID to use for accessing Earth Engine.
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
@@ -15,47 +15,26 @@ GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
 # The path to the isoscapes folder in Earth Engine.
 ISOSCAPES_EE_PATH = f'projects/{GCP_PROJECT_ID}/assets/isoscapes'
 
-_VALIDATION_PASSED_LABEL = "Possible"
-_VALIDATION_FAILED_LABEL = "Not Likely"
-
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
 
 @functions_framework.http
 def reevaluate(request):
     # Initialize Earth Engine.
-    if os.path.isfile('key.json'):
+    # Authenticate to Earth Engine using service account creds
+    credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
+    ee.Initialize(credentials)
 
-        # connection to the service account
-        service_account = 'earth-engine-sa@river-sky-386919.iam.gserviceaccount.com'
-        credentials = ee.ServiceAccountCredentials(
-            service_account, 'key.json')
-        ee.Initialize(credentials)
-        print('initialized with key')
-
-    # if in local env use the local user credential
-    else:
-        ee.Initialize()
-
-    # Shared functions
-    # TODO ddf common
+    # TODO asset list is not needed, update function to only return 
 
     # get list of items in earth engine folder
-    def get_asset_list(parent_name):
+    def is_isoscapes_updated(parent_name):
         parent_asset = ee.data.getAsset(parent_name)
         parent_id = parent_asset['name']
-        asset_list = []
         child_assets = ee.data.listAssets({'parent': parent_id})['assets']
         update = False
         for child_asset in child_assets:
             child_id = child_asset['name']
-            child_type = child_asset['type']
-            if child_type in ['FOLDER', 'IMAGE_COLLECTION']:
-                # Recursively call the function to get child assets
-                asset_list.extend(get_asset_list(child_id))
-            else:
-                asset_list.append(child_id)
-
             asset = ee.data.getAsset(child_id)
             t = asset.get('updateTime')
             date_object = parser.parse(t).date()
@@ -63,34 +42,22 @@ def reevaluate(request):
             print((datetime.now()-timedelta(hours=27)) <= datetime.strptime(str(date_object), "%Y-%m-%d") <= (datetime.now()))
             if (datetime.now()-timedelta(hours=27)) <= datetime.strptime(str(date_object), "%Y-%m-%d") <= (datetime.now()):
                 update = True
-        return asset_list, update
-
-        return ee.FeatureCollection(features)
+                break
+        return update
 
     client: google.cloud.firestore.Client = firestore.client()
 
     # etl untrusted samples
-    asset_list, update = get_asset_list(ISOSCAPES_EE_PATH)
+    update = is_isoscapes_updated(ISOSCAPES_EE_PATH)
 
-    # TODO Verify if data didn't change
     # TODO Add versionning to assets (allow maximum to ten versions)
     if update:
         collectionSnapshot = client.collection(
             'untrusted_samples').get()
         for doc in collectionSnapshot:
+            #rewrite doc to trigger fraud-detection-update-sample
             print(doc.id)
             value = doc.to_dict()
-            is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen  = ttest(
-                value.get('lat'), value.get('lon'), value.get('oxygen'),
-                value.get('nitrogen'), value.get('carbon')).evaluate()
-            value['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
-            value['p_value'] = combined_p_value
-            value['validity_details'] = {
-                'p_value_oxygen': p_value_oxygen,
-                'p_value_carbon': p_value_carbon,
-                'p_value_nitrogen': p_value_nitrogen
-            }
-
             affected_doc = client.collection('untrusted_samples').document(doc.id)
             affected_doc.set(value)
 
