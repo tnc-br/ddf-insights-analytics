@@ -206,5 +206,4 @@ def fraud_detection_process_sample(doc: dict):
     doc['validity_details'] = validity_details
     doc['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
     
-    
     return doc
