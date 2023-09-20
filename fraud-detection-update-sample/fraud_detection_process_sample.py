@@ -76,8 +76,9 @@ class _ttest():
                 self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
                 self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
                 self.oxygen_isoscape_precision = ee.data.getAsset(asset)['properties']['PRECISION']
+                self.oxygen_isoscape_recall = ee.data.getAsset(asset)['properties']['RECALL']
 
-                print(f'found d18O_isoscape in EE assets with properties: name {self.oxygen_isoscape_name} date {self.oxygen_isoscape_date} threshold {self.p_value_theshold} precision {self.oxygen_isoscape_precision}')
+                print(f'found d18O_isoscape in EE assets with properties: name {self.oxygen_isoscape_name} date {self.oxygen_isoscape_date} threshold {self.p_value_theshold} precision {self.oxygen_isoscape_precision} recall {self.oxygen_isoscape_recall}')
             elif 'd13C_isoscape' in asset:
                 self.carbon_isoscape = ee.Image(asset)
             elif 'd15N_isoscape' in asset:
@@ -195,6 +196,7 @@ def fraud_detection_process_sample(doc: dict):
         'reference_oxygen_isoscape_name': t.oxygen_isoscape_name,
         'reference_oxygen_isoscape_creation_date': t.oxygen_isoscape_date,
         'reference_oxygen_isoscape_precision': t.oxygen_isoscape_precision,
+        'reference_oxygen_isoscape_recall': t.oxygen_isoscape_recall,
         'd18O_cel_sample_mean': np.mean(oxygen_measurements),
         'd18O_cel_sample_variance': np.std(oxygen_measurements) ** 2,
         'd18O_cel_reference_mean': o_ref_mean,
