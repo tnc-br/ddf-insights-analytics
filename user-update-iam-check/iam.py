@@ -47,7 +47,7 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers@timberid.org', body = member)
+      add_request = self.service.members().insert(groupKey = 'earth-engine-developers-test@timberid.org', body = member)
       requests.append(add_request)
       member= {
         "kind": "admin",
@@ -62,7 +62,7 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'gcp-organization-admins@timberid.org', body = member)
+      add_request = self.service.members().insert(groupKey = 'gcp-organization-admins-test@timberid.org', body = member)
       requests.append(add_request)
       member= {
         "kind": "admin",
@@ -77,7 +77,7 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers@timberid.org', body = member)
+      add_request = self.service.members().insert(groupKey = 'earth-engine-developers-test@timberid.org', body = member)
       requests.append(add_request)
       
     client: google.cloud.firestore.Client = firestore.client()
@@ -135,10 +135,10 @@ class UserIam():
     client: google.cloud.firestore.Client = firestore.client()
 
     if role == "admin" or role == "member": #have access to the GCP project
-      add_request = self.service.members().delete(groupKey = 'earth-engine-developers@timberid.org', memberKey = email)
+      add_request = self.service.members().delete(groupKey = 'earth-engine-developers-test@timberid.org', memberKey = email)
       requests.append(add_request)
     elif role == "site_admin": #manage the organization and have access to the GCP project
-      add_request = self.service.members().delete(groupKey = 'gcp-organization-admins@timberid.org', memberKey = email)
+      add_request = self.service.members().delete(groupKey = 'gcp-organization-admins-test@timberid.org', memberKey = email)
       requests.append(add_request)
 
     if org_id != '':

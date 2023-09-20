@@ -149,8 +149,7 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
         if 'org_email' in value and 'org_name' in value:
             org_email = value.get('org_email')
             org_name = value.get('org_name')
-            emails = value.get('emails')
-
+\
             #check if org_email is associated to a google group
             check_org(org_email, org_name)
 
