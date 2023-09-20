@@ -72,6 +72,8 @@ class _ttest():
         for asset in asset_list:
             if 'd18O_isoscape' in asset:
                 self.oxygen_isoscape = ee.Image(asset)
+                self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['REFERENCE_ISOSCAPE_NAME']
+                self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
                 self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
             elif 'd13C_isoscape' in asset:
                 self.carbon_isoscape = ee.Image(asset)
@@ -92,7 +94,11 @@ class _ttest():
             geometry=poi).getInfo().get('b1')
         isoscape_var = isoscape.select('b2').reduceRegion(
             reducer=ee.Reducer.mean(),
-            geometry=poi,).getInfo().get('b2')
+            geometry=poi).getInfo().get('b2')
+
+        if not isoscape_mean or not isoscape_var:
+            raise ValueError("Failed to get reference data at ", poi)
+        
         isoscape_std = np.sqrt(isoscape_var)
 
         _, p_value = scipy.stats.ttest_ind_from_stats(
@@ -101,12 +107,13 @@ class _ttest():
             isoscape_std, 5,
             equal_var=False, alternative="two-sided")
 
-        return p_value
+        return p_value, isoscape_mean, isoscape_var
 
     def evaluate(self):
         p_value_oxygen, p_value_carbon, p_value_nitrogen = 1, 1, 1
+        o_mean, o_var, c_mean, c_var, n_mean, n_var = None, None, None, None, None, None 
         if self.oxygen_isoscape and _ENABLE_d18O_ANALYSIS:
-            p_value_oxygen = self._calc_p_value(
+            p_value_oxygen, o_mean, o_var = self._calc_p_value(
                 np.mean(self.oxygen_measurements),
                 np.std(self.oxygen_measurements),
                 len(self.oxygen_measurements),
@@ -114,7 +121,7 @@ class _ttest():
                 self.oxygen_isoscape)
 
         if self.carbon_isoscape and _ENABLE_d13C_ANALYSIS:
-            p_value_carbon = self._calc_p_value(
+            p_value_carbon, c_mean, c_var = self._calc_p_value(
                 np.mean(self.carbon_measurements),
                 np.std(self.carbon_measurements),
                 len(self.carbon_measurements),
@@ -122,7 +129,7 @@ class _ttest():
                 self.carbon_isoscape)
 
         if self.nitrogen_isoscape and _ENABLE_d15N_ANALYSIS:
-            p_value_nitrogen = self._calc_p_value(
+            p_value_nitrogen, n_mean, n_var = self._calc_p_value(
                 np.mean(self.nitrogen_measurements),
                 np.std(self.nitrogen_measurements),
                 len(self.nitrogen_measurements),
@@ -131,7 +138,7 @@ class _ttest():
 
         combined_p_value = p_value_oxygen * p_value_carbon * p_value_nitrogen
         is_invalid = combined_p_value <= self.p_value_theshold
-        return is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen
+        return is_invalid, combined_p_value, p_value_oxygen, o_mean, o_var, p_value_carbon, p_value_nitrogen
 
 def fraud_detection_process_sample(doc: dict):
     """
@@ -164,18 +171,25 @@ def fraud_detection_process_sample(doc: dict):
     lat = float(doc['lat'])
     lon = float(doc['lon'])
     
-    is_invalid, combined_p_value, p_value_oxygen, p_value_carbon, p_value_nitrogen = _ttest(
-        lat, lon,
-        oxygen_measurements, 
-        nitrogen_measurements,
-        carbon_measurements).evaluate()
+    t = _ttest(lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements)
+    is_invalid, combined_p_value, p_value_oxygen, o_ref_mean, o_ref_var, p_value_carbon, p_value_nitrogen = t.evaluate()
     
+    doc['reference_oxygen_isoscape_name'] = t.oxygen_isoscape_name
+    doc['reference_oxygen_isoscape_creation_date'] = t.oxygen_isoscape_date
+    doc['d18O_cel_sample_mean'] = np.mean(oxygen_measurements)
+    doc['d18O_cel_sample_variance'] = np.std(oxygen_measurements) ** 2
+    doc['d18O_cel_reference_mean'] = o_ref_mean
+    doc['d18O_cel_reference_variance'] = o_ref_var
+
     validity_details = {
         'p_value_oxygen': p_value_oxygen,
         'p_value_carbon': p_value_carbon,
         'p_value_nitrogen': p_value_nitrogen
     }
-    doc['p_value'] = combined_p_value
-    doc['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
+    
     doc['validity_details'] = validity_details
+    doc['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
+    doc['p_value'] = combined_p_value
+    doc['p_value_threshold'] = t.p_value_theshold
+    
     return doc
