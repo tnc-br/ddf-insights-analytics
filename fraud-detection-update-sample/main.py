@@ -17,7 +17,15 @@ import ee
 app = initialize_app()
 
 # Fields that are not inputs to the fraud detection, and should not trigger a re-run
-OUTPUT_FIELDS = set(["validity", "validity_details", "water_pct", "land_use_anthropic_pct", "land_use_primary_vegetation_pct", "land_use_secondary_vegetation_or_regrowth_pct", "alerts"])
+OUTPUT_FIELDS = set([
+    "validity",
+    "validity_details",
+    "water_pct",
+    "land_use_anthropic_pct",
+    "land_use_primary_vegetation_pct",
+    "land_use_secondary_vegetation_or_regrowth_pct",
+    "alerts",
+])
 
 @functions_framework.cloud_event
 def hello_firestore(cloud_event: CloudEvent) -> None:
