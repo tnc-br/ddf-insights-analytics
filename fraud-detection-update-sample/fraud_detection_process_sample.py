@@ -187,25 +187,24 @@ def fraud_detection_process_sample(doc: dict):
     
     t = _ttest(lat, lon, oxygen_measurements, nitrogen_measurements, carbon_measurements)
     is_invalid, combined_p_value, p_value_oxygen, o_ref_mean, o_ref_var, p_value_carbon, p_value_nitrogen = t.evaluate()
-    
-    doc['reference_oxygen_isoscape_name'] = t.oxygen_isoscape_name
-    doc['reference_oxygen_isoscape_creation_date'] = t.oxygen_isoscape_date
-    doc['reference_oxygen_isoscape_precision'] = t.oxygen_isoscape_precision
-    
-    doc['d18O_cel_sample_mean'] = np.mean(oxygen_measurements)
-    doc['d18O_cel_sample_variance'] = np.std(oxygen_measurements) ** 2
-    doc['d18O_cel_reference_mean'] = o_ref_mean
-    doc['d18O_cel_reference_variance'] = o_ref_var
 
     validity_details = {
         'p_value_oxygen': p_value_oxygen,
         'p_value_carbon': p_value_carbon,
-        'p_value_nitrogen': p_value_nitrogen
+        'p_value_nitrogen': p_value_nitrogen,
+        'reference_oxygen_isoscape_name': t.oxygen_isoscape_name,
+        'reference_oxygen_isoscape_creation_date': t.oxygen_isoscape_date,
+        'reference_oxygen_isoscape_precision': t.oxygen_isoscape_precision,
+        'd18O_cel_sample_mean': np.mean(oxygen_measurements),
+        'd18O_cel_sample_variance': np.std(oxygen_measurements) ** 2,
+        'd18O_cel_reference_mean': o_ref_mean,
+        'd18O_cel_reference_variance': o_ref_var,
+        'p_value': combined_p_value,
+        'p_value_threshold': t.p_value_theshold,
     }
     
     doc['validity_details'] = validity_details
     doc['validity'] = _VALIDATION_FAILED_LABEL if is_invalid else _VALIDATION_PASSED_LABEL
-    doc['p_value'] = combined_p_value
-    doc['p_value_threshold'] = t.p_value_theshold
+    
     
     return doc
