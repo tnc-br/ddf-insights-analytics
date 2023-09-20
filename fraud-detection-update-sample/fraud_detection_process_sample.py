@@ -75,6 +75,9 @@ class _ttest():
                 self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['REFERENCE_ISOSCAPE_NAME']
                 self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
                 self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
+                self.oxygen_isoscape_precision = ee.data.getAsset(asset)['properties']['PRECISION']
+
+                print(f'found d18O_isoscape in EE assets with properties: name {self.oxygen_isoscape_name} date {self.oxygen_isoscape_date} threshold {self.p_value_theshold} precision {self.oxygen_isoscape_precision}')
             elif 'd13C_isoscape' in asset:
                 self.carbon_isoscape = ee.Image(asset)
             elif 'd15N_isoscape' in asset:
@@ -151,22 +154,33 @@ def fraud_detection_process_sample(doc: dict):
     Returns:
         A dictionary representing the sample with updated validity and additional information.
     """
-    if not('d18O_cel' in doc and 'd15N_cel' in doc and 'd13C_cel' in doc):
-      print("Missing input data, skipping fraud detection. Sample must contain oxygen, nitrogen and carbon measurements.")
-      return doc
-    
-    oxygen_measurements = doc['d18O_cel']
-    nitrogen_measurements = doc['d15N_cel']
-    carbon_measurements = doc['d13C_cel']
-    
-    if not(isinstance(oxygen_measurements, Sequence) and isinstance(nitrogen_measurements, Sequence) and isinstance(carbon_measurements, Sequence)):
-      print("Missing input data, skipping fraud detection. Oxygen, nitrogen and carbon measurements must be in list form.")
-      return doc
 
-    if not(len(oxygen_measurements) >=2 and len(nitrogen_measurements) >=2 and len(carbon_measurements) >=2):
-      print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
-      return doc
-            
+    # Use .get(key) instead of [key] so that it defaults to None
+    oxygen_measurements = doc.get('d18O_cel') 
+    nitrogen_measurements = doc.get('d15N_cel') 
+    carbon_measurements = doc.get('d13C_cel') 
+
+    if _ENABLE_d18O_ANALYSIS:
+        if not(isinstance(oxygen_measurements, Sequence) and len(oxygen_measurements) >=2):
+            print("Missing oxygen input data, skipping fraud detection. Measurements must be in list form and contain at least 2 measurements.")
+            return doc
+        else:
+            oxygen_measurements = list(np.float_(oxygen_measurements))
+
+    if _ENABLE_d15N_ANALYSIS:
+        if not(isinstance(nitrogen_measurements, Sequence) and len(nitrogen_measurements) >=2):
+            print("Missing nitrogen input data, skipping fraud detection. Measurements must be in list form and contain at least 2 measurements.")
+            return doc
+        else:
+            nitrogen_measurements = list(np.float_(nitrogen_measurements))
+    
+    if _ENABLE_d13C_ANALYSIS:
+        if not(isinstance(carbon_measurements, Sequence) and len(carbon_measurements) >=2):
+            print("Missing carbon input data, skipping fraud detection. Measurements must be in list form and contain at least 2 measurements.")
+            return doc
+        else:
+            carbon_measurements = list(np.float_(carbon_measurements))
+
 
     lat = float(doc['lat'])
     lon = float(doc['lon'])
@@ -176,6 +190,8 @@ def fraud_detection_process_sample(doc: dict):
     
     doc['reference_oxygen_isoscape_name'] = t.oxygen_isoscape_name
     doc['reference_oxygen_isoscape_creation_date'] = t.oxygen_isoscape_date
+    doc['reference_oxygen_isoscape_precision'] = t.oxygen_isoscape_precision
+    
     doc['d18O_cel_sample_mean'] = np.mean(oxygen_measurements)
     doc['d18O_cel_sample_variance'] = np.std(oxygen_measurements) ** 2
     doc['d18O_cel_reference_mean'] = o_ref_mean
