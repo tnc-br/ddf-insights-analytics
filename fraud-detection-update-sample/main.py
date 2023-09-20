@@ -20,7 +20,7 @@ app = initialize_app()
 OUTPUT_FIELDS = set(["validity", "validity_details", "water_pct", "land_use_anthropic_pct", "land_use_primary_vegetation_pct", "land_use_secondary_vegetation_or_regrowth_pct", "alerts"])
 
 @functions_framework.cloud_event
-def hello_firestore(cloud_event: CloudEvent) -> None:
+def evaluate(cloud_event: CloudEvent) -> None:
     """Triggers by a change to a Firestore document.
     Args:
         cloud_event: cloud event with information on the firestore event trigger
