@@ -84,7 +84,8 @@ class UserIam():
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      if (org_email != None) and (org_email != "") : 
+      if (org_email != None) and (org_email != "") :
+        org_email = org_email.lower()
         print("org email is ")
         print(org_email)
         add_request = self.service.members().insert(groupKey = org_email, body = member)
@@ -143,7 +144,8 @@ class UserIam():
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      if (org_email != None) and (org_email != "") : 
+      if (org_email != None) and (org_email != "") :
+        org_email = org_email.lower()
         add_request = self.service.members().delete(groupKey = org_email, memberKey = email)
         print("org email is ")
         print(org_email)
