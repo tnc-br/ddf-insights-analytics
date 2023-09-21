@@ -23,8 +23,14 @@ BRAZIL_LAND_USE_LAYER_NAME = "Brazil Land Use"
 MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE =  "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
 
 # Triggered from a message on a Cloud Pub/Sub topic.
+#
+# Generates a land use map for the lat lon in the given Firestore document, using
+# the MapBiomas Brazil deforestation / land use dataset.
+#
+# If message is empty or not a document_id, generates a land use map for all documents in the Firestore collection.
+# If message is a document_id, generates a land use map for that document.
 @functions_framework.cloud_event
-def hello_pubsub(cloud_event):
+def receive_pubsub_message_generate_maps(cloud_event):
     # Authenticate to Earth Engine using service account creds
     credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
     ee.Initialize(credentials)
