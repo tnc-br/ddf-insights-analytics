@@ -13,12 +13,14 @@ from googleapiclient.discovery import build
 import google.auth
 from google.cloud import storage
 
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
+# The path to the assets in Earth Engine.
+PARENT_PATH = f'projects/{GCP_PROJECT_ID}/assets/'
 
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
-PARENT_PATH = 'projects/timberid-prd/assets/'
-
 
 @functions_framework.cloud_event
 def update_ee_acl(cloud_event: CloudEvent) -> None:

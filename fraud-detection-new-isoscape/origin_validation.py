@@ -6,8 +6,10 @@ import scipy
 import google.auth
 
 """Global Variable definition"""
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
-ISOSCAPES_EE_PATH = 'projects/timberid-prd/assets/isoscapes'
+
+ISOSCAPES_EE_PATH = 'projects/{GCP_PROJECT_ID}/assets/isoscapes'
 
 # If enabled, performs t-test of oxygen cellulose measurements against the values in the d18O_isoscape.
 _ENABLE_d18O_ANALYSIS = True
