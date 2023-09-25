@@ -184,6 +184,8 @@ def etl(request):
                     
                 print(task.status())
                 org_email = k.lower() + "@timberid.org"
+                if GCP_PROJECT_ID == 'river-sky-386919':
+                    org_email = k.lower() + '-test@timberid.org'
                 acl = { "writers": ['group:'+org_email]}
                 ee.data.setAssetAcl(AssetId, acl)
     client: google.cloud.firestore.Client = firestore.client()
