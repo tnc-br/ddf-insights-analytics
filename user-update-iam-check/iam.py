@@ -7,10 +7,6 @@ import google.auth
 from google.cloud import storage
 
 
-
-
-
-
 class UserIam():
 
 
@@ -40,6 +36,8 @@ class UserIam():
     role = value.get('role')
     org_id = value.get('org')
     requests = []
+    GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
+
     if role == "admin": #have access to the GCP project
       member= {
         "kind": "member",
@@ -47,7 +45,11 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers-test@timberid.org', body = member)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+
+      add_request = self.service.members().insert(groupKey = grp_key, body = member)
       requests.append(add_request)
       member= {
         "kind": "admin",
@@ -77,7 +79,10 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers-test@timberid.org', body = member)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+      add_request = self.service.members().insert(groupKey = grp_key, body = member)
       requests.append(add_request)
       
     client: google.cloud.firestore.Client = firestore.client()
@@ -134,9 +139,13 @@ class UserIam():
     org_id = value.get('org')
     requests = []
     client: google.cloud.firestore.Client = firestore.client()
+    GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
     if role == "admin" or role == "member": #have access to the GCP project
-      add_request = self.service.members().delete(groupKey = 'earth-engine-developers-test@timberid.org', memberKey = email)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+      add_request = self.service.members().delete(groupKey = grp_key, memberKey = email)
       requests.append(add_request)
     elif role == "site_admin": #manage the organization and have access to the GCP project
       add_request = self.service.members().delete(groupKey = 'gcp-organization-admins-test@timberid.org', memberKey = email)

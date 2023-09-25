@@ -4,25 +4,47 @@ import os
 import numpy as np
 import scipy
 import google.auth
-from typing import Sequence
 
 """Global Variable definition"""
 
 # Get function environment variable for GCP project ID to use for accessing Earth Engine.
-GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
 # The path to the isoscapes folder in Earth Engine.
 ISOSCAPES_EE_PATH = f'projects/{GCP_PROJECT_ID}/assets/isoscapes'
 
-# If enabled, performs t-test of oxygen cellulose measurements against the values in the d18O_isoscape.
-_ENABLE_d18O_ANALYSIS = True
-# If enabled, performs t-test of carbon cellulose measurements against the values in the d13C_isoscape.
-_ENABLE_d13C_ANALYSIS = False
-# If enabled, performs t-test of nitrogen cellulose measurements against the values in the d15N_isoscape.
-_ENABLE_d15N_ANALYSIS = False
+def fraud_detection_process_sample(value: dict):
+    """
+    Performs fraud detection on a given sample and updates its validity and additional information.
 
-_VALIDATION_PASSED_LABEL = "Possible"
-_VALIDATION_FAILED_LABEL = "Not Likely"
+    Args:
+        value (dict): A dictionary representing the sample to be processed. For keys, see firestore or
+          unit tests for more details.
+
+    Returns:
+        A dictionary representing the sample with updated validity and additional information.
+    """
+    if not('oxygen' in value and 'nitrogen' in value and 'carbon' in value):
+        if not(isinstance(oxygen, Sequence) and isinstance(nitrogen, Sequence) and isinstance(carbon, Sequence)):
+            if not(len(oxygen) >=2 and len(nitrogen) >=2 and len(carbon) >=2):
+                print("Missing input data, skipping fraud detection. Sample must contain at least 2 oxygen, nitrogen and carbon measurements.")
+                return value
+            
+    oxygen = value.get('oxygen')
+    nitrogen = value.get('nitrogen')
+    carbon = value.get('carbon')
+    lat = float(value.get('lat'))
+    lon = float(value.get('lon'))
+    
+    fraud_rate, p_value_oxygen, p_value_carbon, p_value_nitrogen = ttest(lat, lon,oxygen,nitrogen,carbon).evaluate()
+    validity_details = {
+        'p_value_oxygen': p_value_oxygen,
+        'p_value_carbon': p_value_carbon,
+        'p_value_nitrogen': p_value_nitrogen
+    }
+    value['validity'] = fraud_rate
+    value['validity_details'] = validity_details
+    return value
 
 class _ttest():
     """
@@ -49,6 +71,7 @@ class _ttest():
         ee.Initialize(credentials)
 
         # fetching isoscapes
+
         def get_asset_list(parent_name) -> list:
           parent_asset = ee.data.getAsset(parent_name)
           parent_id = parent_asset['name']
@@ -63,11 +86,6 @@ class _ttest():
               else:
                   asset_list.append(child_id)
           return asset_list
-        
-        self.oxygen_isoscape = None
-        self.carbon_isoscape = None
-        self.nitrogen_isoscape = None
-        self.p_value_theshold = 0
         asset_list = get_asset_list(ISOSCAPES_EE_PATH)
         for asset in asset_list:
             if 'd18O_isoscape' in asset:
@@ -144,13 +162,52 @@ class _ttest():
         is_invalid = combined_p_value <= self.p_value_theshold
         return is_invalid, combined_p_value, p_value_oxygen, o_mean, o_var, p_value_carbon, p_value_nitrogen
 
-def fraud_detection_process_sample(doc: dict):
-    """
-    Performs fraud detection on a given sample and updates its validity and additional information.
+        _, p_value_oxygen = scipy.stats.ttest_ind_from_stats(
+            isotope_mean, isotope_std, len(self.oxygen_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
 
-    Args:
-        sample_measurements(dict): A dictionary representing the sample to be processed. For keys, see firestore or
-          unit tests for more details.
+        """**Carbon** Isoscape """
+
+        isoscape_mean = self.carbon_means_iso.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=self.poi,
+            scale=30).getInfo().get('b1')
+        isoscape_var = self.carbon_variances_iso.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=self.poi,
+            scale=30).getInfo().get('b2')
+        if isoscape_var is not None:
+            isoscape_std = np.sqrt(isoscape_var)
+        else:
+            isoscape_std = 0
+
+        """Isotope calculation"""
+
+        isotope_mean = np.mean(self.carbon_measurements)
+        isotope_std = np.std(self.carbon_measurements)
+        print(isotope_mean, isotope_std, isoscape_mean, isoscape_std)
+
+        """ttest and p-value"""
+
+        _, p_value_carbon = scipy.stats.ttest_ind_from_stats(
+            isotope_mean, isotope_std, len(self.carbon_measurements), isoscape_mean, isoscape_std, 30, equal_var=False, alternative="two-sided")
+
+        """**Nitrogen**
+
+    Isoscape
+    """
+
+        isoscape_mean = self.nitrogen_means_iso.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=self.poi,
+            scale=30).getInfo().get('b1')
+        isoscape_var = self.nitrogen_variances_iso.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=self.poi,
+            scale=30).getInfo().get('b1')
+        if isoscape_var is not None:
+            isoscape_std = np.sqrt(isoscape_var)
+        else:
+            isoscape_std = 0
 
     Returns:
         A dictionary representing the sample with updated validity and additional information.

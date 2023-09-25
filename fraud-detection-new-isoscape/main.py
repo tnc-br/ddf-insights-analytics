@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from google.auth import compute_engine
 
 # Get function environment variable for GCP project ID to use for accessing Earth Engine.
-GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
 # The path to the isoscapes folder in Earth Engine.
 ISOSCAPES_EE_PATH = f'projects/{GCP_PROJECT_ID}/assets/isoscapes'
