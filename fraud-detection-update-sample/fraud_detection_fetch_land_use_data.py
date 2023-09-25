@@ -1,5 +1,9 @@
 import ee
 
+MAPBIOMAS_BRAZIL_ANNUAL_WATER_COVERAGE_IMAGE = 'projects/mapbiomas-workspace/public/collection6/mapbiomas_water_collection1_annual_water_coverage_v2'
+
+MAPBIOMAS_BRAZIL_LAND_USE_IMAGE = 'projects/mapbiomas-workspace/public/collection8/mapbiomas_collection80_deforestation_secondary_vegetation_v1'
+
 def fraud_detection_fetch_land_use_data(value: dict):
     """
     Fetches land use data for a given sample location and updates the sample dictionary with the results.
@@ -48,7 +52,7 @@ def _fraud_detection_fetch_land_use_data(lat: float, lon: float):
     # ==========
 
     # load MapBiomas Brazil water image
-    water_layers = ee.Image('projects/mapbiomas-workspace/public/collection6/mapbiomas-water-collection1-annual-water-coverage-1')
+    water_layers = ee.Image(MAPBIOMAS_BRAZIL_ANNUAL_WATER_COVERAGE_IMAGE)
     water_layer_2020_mask = water_layers.select('water_coverage_2020').mask()
     full_brazil_geometry = water_layer_2020_mask.geometry().difference(radius_10km_buffer)
 
@@ -82,7 +86,7 @@ def _fraud_detection_fetch_land_use_data(lat: float, lon: float):
     year_band_list = list(year_band_dict.keys())
 
     # load MapBiomas Brazil deforestation + land use dataset
-    land_use_layers = ee.Image('projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1').select(year_band_list).divide(100).floor();
+    land_use_layers = ee.Image(MAPBIOMAS_BRAZIL_LAND_USE_IMAGE).select(year_band_list).divide(100).floor();
 
     # separate anthropic and vegetation to calculate percentages
     is_anthropic = land_use_layers.eq(1).Or(land_use_layers.eq(4)).Or(land_use_layers.eq(6))
