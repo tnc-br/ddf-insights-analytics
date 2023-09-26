@@ -14,7 +14,7 @@ import google.auth
 from google.cloud import storage
 
 # Get function environment variable for GCP project ID to use for accessing Earth Engine.
-GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
 # The path to the assets in Earth Engine.
 PARENT_PATH = f'projects/{GCP_PROJECT_ID}/assets/'
@@ -147,10 +147,8 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
         
         value = doc.to_dict()
         if 'org_email' in value and 'org_name' in value:
-            org_email = value.get('org_email')
-            org_name = value.get('org_name')
-            emails = value.get('emails')
-
+            org_email = (value.get('org_email')).lower()
+            org_name = (value.get('org_name')).lower()
             #check if org_email is associated to a google group
             check_org(org_email, org_name)
 

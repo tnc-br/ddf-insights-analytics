@@ -10,6 +10,7 @@ import os
 
 app = initialize_app()
 
+
 # Google Cloud Storage bucket name and folder name
 GCS_BUCKET_NAME = "timberid-public-to-internet"
 GCS_FOLDER_NAME = "timberid-maps"
