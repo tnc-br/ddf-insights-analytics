@@ -7,6 +7,8 @@ import os
 
 from google.cloud import storage
 
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
 class UserIam():
 
@@ -20,7 +22,11 @@ class UserIam():
     # Initialise a client
     storage_client = storage.Client()
     # Create a bucket object for our bucket
-    bucket = storage_client.get_bucket("gadmin_credentials")
+    bucket_name = "gadmin_credentials_prd"
+    if GCP_PROJECT_ID == 'river-sky-386919':
+      bucket_name = "gadmin_credentials"
+
+    bucket = storage_client.get_bucket(bucket_name)
     # Create a blob object from the filepath
     blob = bucket.blob("credentials.json")
     # Download the file to a destination
@@ -37,7 +43,6 @@ class UserIam():
     role = value.get('role')
     org_id = value.get('org')
     requests = []
-    GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
     if role == "admin": #have access to the GCP project
       member= {
@@ -140,7 +145,6 @@ class UserIam():
     org_id = value.get('org')
     requests = []
     client: google.cloud.firestore.Client = firestore.client()
-    GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
     if role == "admin" or role == "member": #have access to the GCP project
       grp_key = 'earth-engine-developers@timberid.org'
