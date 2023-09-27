@@ -61,8 +61,8 @@ def receive_pubsub_message_generate_maps(cloud_event):
     mapbiomas_land_use_base_map = generate_initial_map(land_use_mapbiomas_image)
 
     if doc.exists:
-        print(f'Document exists, generating map for {document_id}')
         document_id = pub_sub_message
+        print(f'Document exists, generating map for {document_id}')
         doc_dict = doc.to_dict()
         if 'lat' in doc_dict and 'lon' in doc_dict:
             generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
