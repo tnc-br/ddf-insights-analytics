@@ -9,3 +9,4 @@ ee
 geemap
 google-auth
 google-cloud-storage
+google-cloud-pubsub
