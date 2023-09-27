@@ -17,9 +17,9 @@ GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
 # Topic ID for GCS Pub/Sub topic. See fraud-detection-generate-maps/main.py for context.
 TOPIC_ID = "fraud-detection-generate-maps-daily"
 
-# Pub/Sub message to generate all maps. This is set in the Cloud Pub/Sub topic.
+# Pub/Sub message to generate all maps (for every document) This is set in the Cloud Pub/Sub topic.
 # See `fraud-detection-generate-maps-daily` Cloud Pub/Sub topic.
-ALL_DOCS_MESSAGE_CONTENT = "ALL_DOCS"
+ALL_MAPS_MESSAGE_CONTENT = "ALL_MAPS"
 
 # Google Cloud Storage bucket name and folder name
 GCS_BUCKET_NAME = "timberid-public-to-internet"
@@ -68,7 +68,7 @@ def receive_pubsub_message_generate_maps(cloud_event):
             generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
         else:
             print(f'Document {document_id} does not contain lat and lon.')
-    elif pub_sub_message == ALL_DOCS_MESSAGE_CONTENT:
+    elif pub_sub_message == ALL_MAPS_MESSAGE_CONTENT:
         print(f'Received message: {pub_sub_message}, generating all maps')
 
         # Get all documents in the collection
