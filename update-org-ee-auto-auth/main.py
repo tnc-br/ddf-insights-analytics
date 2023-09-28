@@ -60,7 +60,11 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
         # Initialise a client
         storage_client = storage.Client()
         # Create a bucket object for our bucket
-        bucket = storage_client.get_bucket("gadmin_credentials")
+        bucket_name = "gadmin_credentials_prd"
+        if GCP_PROJECT_ID == 'river-sky-386919':
+            bucket_name = "gadmin_credentials"
+
+        bucket = storage_client.get_bucket(bucket_name)
         # Create a blob object from the filepath
         blob = bucket.blob("credentials.json")
         # Download the file to a destination
