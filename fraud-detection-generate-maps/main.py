@@ -7,8 +7,19 @@ from google.auth import compute_engine
 import ee
 import geemap
 import os
+from google.cloud import pubsub_v1
 
 app = initialize_app()
+
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "river-sky-386919")
+
+# Topic ID for GCS Pub/Sub topic. See fraud-detection-generate-maps/main.py for context.
+TOPIC_ID = "fraud-detection-generate-maps-daily"
+
+# Pub/Sub message to generate all maps (for every document) This is set in the Cloud Pub/Sub topic.
+# See `fraud-detection-generate-maps-daily` Cloud Pub/Sub topic.
+ALL_MAPS_MESSAGE_CONTENT = "ALL_MAPS"
 
 # Google Cloud Storage bucket name and folder name
 GCS_BUCKET_NAME = "timberid-public-to-internet"
@@ -23,20 +34,26 @@ BRAZIL_LAND_USE_LAYER_NAME = "Brazil Land Use"
 MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE =  "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
 
 # Triggered from a message on a Cloud Pub/Sub topic.
+#
+# Generates a land use map for the lat lon in the given Firestore document, using
+# the MapBiomas Brazil deforestation / land use dataset.
+#
+# If message is empty or not a document_id, generates a land use map for all documents in the Firestore collection.
+# If message is a document_id, generates a land use map for that document.
 @functions_framework.cloud_event
-def hello_pubsub(cloud_event):
+def receive_pubsub_message_generate_maps(cloud_event):
     # Authenticate to Earth Engine using service account creds
     credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
     ee.Initialize(credentials)
 
     # Print out the data from Pub/Sub, to prove that it worked
-    document_id = base64.b64decode(cloud_event.data["message"]["data"]).decode()
+    pub_sub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode()
 
     client: google.cloud.firestore.Client = firestore.client()
     collection_ref = client.collection("untrusted_samples")
 
     # Check if the document exists
-    doc = collection_ref.document(document_id).get()
+    doc = collection_ref.document(pub_sub_message).get()
 
     # load MapBiomas Brazil deforestation / land use dataset
     land_use_mapbiomas_image = ee.Image(MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE)
@@ -44,25 +61,36 @@ def hello_pubsub(cloud_event):
     mapbiomas_land_use_base_map = generate_initial_map(land_use_mapbiomas_image)
 
     if doc.exists:
+        document_id = pub_sub_message
         print(f'Document exists, generating map for {document_id}')
         doc_dict = doc.to_dict()
         if 'lat' in doc_dict and 'lon' in doc_dict:
             generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
         else:
             print(f'Document {document_id} does not contain lat and lon.')
-    else:
-        print(f'Document does not exist for id: {document_id}, generating all maps')
+    elif pub_sub_message == ALL_MAPS_MESSAGE_CONTENT:
+        print(f'Received message: {pub_sub_message}, generating all maps')
+
         # Get all documents in the collection
         docs = collection_ref.stream()
-        # Iterate over the documents and print their IDs and data
+
+        # Setup Pub Sub topic to send messages
+        publisher = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(GCP_PROJECT_ID, TOPIC_ID)
+
+        # Iterate over the documents and trigger the function per document_id
         for doc in docs:
-            print(f'Generating map for {doc.id}')
+            print(f'Publishing message for {doc.id}')
             document_id = doc.id
             doc_dict = doc.to_dict()
             if 'lat' in doc_dict and 'lon' in doc_dict:
-                generate_full_map_and_upload_to_gcs(doc_dict['lat'], doc_dict['lon'], land_use_mapbiomas_image, mapbiomas_land_use_base_map, document_id)
+                data = document_id.encode("utf-8")
+                future = publisher.publish(topic_path, data)
+                print(f"Published messaged for id: {document_id} to {topic_path}. Result: {future.result()}")
             else:
-                print(f'Document {document_id} does not contain lat and lon.')    
+                print(f'Document {document_id} does not contain lat and lon.') 
+    else:
+        print(f'Received message: {pub_sub_message}. No action taken.')
 
 def generate_initial_map(land_use_mapbiomas_image):
     """

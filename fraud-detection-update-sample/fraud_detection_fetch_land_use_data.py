@@ -1,5 +1,11 @@
 import ee
 
+MAPBIOMAS_BRAZIL_ANNUAL_WATER_COVERAGE_GEE_IMAGE = 'projects/mapbiomas-workspace/public/collection8/mapbiomas_water_collection2_annual_water_coverage_v1'
+MAPBIOMAS_WATER_BAND_NAME = 'annual_water_coverage_2022'
+
+MAPBIOMAS_BRAZIL_LAND_USE_GEE_IMAGE = 'projects/mapbiomas-workspace/public/collection8/mapbiomas_collection80_deforestation_secondary_vegetation_v1'
+MAPBIOMAS_LAND_USE_BAND_NAME_PREFIX = 'classification_'
+
 def fraud_detection_fetch_land_use_data(value: dict):
     """
     Fetches land use data for a given sample location and updates the sample dictionary with the results.
@@ -48,24 +54,23 @@ def _fraud_detection_fetch_land_use_data(lat: float, lon: float):
     # ==========
 
     # load MapBiomas Brazil water image
-    water_layers = ee.Image('projects/mapbiomas-workspace/public/collection6/mapbiomas-water-collection1-annual-water-coverage-1')
-    water_layer_2020_mask = water_layers.select('water_coverage_2020').mask()
-    full_brazil_geometry = water_layer_2020_mask.geometry().difference(radius_10km_buffer)
+    water_layers = ee.Image(MAPBIOMAS_BRAZIL_ANNUAL_WATER_COVERAGE_GEE_IMAGE).select(MAPBIOMAS_WATER_BAND_NAME)
+    water_layer_mask = water_layers.mask()
 
     # calculate point sample
-    is_point_water = water_layer_2020_mask.sample(point).first().get('water_coverage_2020').getInfo()
+    is_point_water = water_layer_mask.sample(point).first().get(MAPBIOMAS_WATER_BAND_NAME).getInfo()
 
     # calculate region water percentage
-    water_mean_in_1km_buffer = water_layer_2020_mask.reduceRegion(
+    water_mean_in_1km_buffer = water_layer_mask.reduceRegion(
       reducer=ee.Reducer.mean(),
       geometry=radius_1km_buffer,
       maxPixels=1e8
-    ).get('water_coverage_2020').getInfo()
-    water_mean_in_10km_buffer = water_layer_2020_mask.reduceRegion(
+    ).get(MAPBIOMAS_WATER_BAND_NAME).getInfo()
+    water_mean_in_10km_buffer = water_layer_mask.reduceRegion(
       reducer=ee.Reducer.mean(),
       geometry=radius_10km_buffer,
       maxPixels=1e8
-    ).get('water_coverage_2020').getInfo()
+    ).get(MAPBIOMAS_WATER_BAND_NAME).getInfo()
 
     water_results = {
         'is_point_water': True if is_point_water else False,
@@ -78,11 +83,11 @@ def _fraud_detection_fetch_land_use_data(lat: float, lon: float):
 
     # create band names for each year between 2011 and 2021
     years = list(range(2011, 2022))
-    year_band_dict = {"product_" + str(year): year for year in years}
+    year_band_dict = {MAPBIOMAS_LAND_USE_BAND_NAME_PREFIX + str(year): year for year in years}
     year_band_list = list(year_band_dict.keys())
 
     # load MapBiomas Brazil deforestation + land use dataset
-    land_use_layers = ee.Image('projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1').select(year_band_list).divide(100).floor();
+    land_use_layers = ee.Image(MAPBIOMAS_BRAZIL_LAND_USE_GEE_IMAGE).select(year_band_list).divide(100).floor();
 
     # separate anthropic and vegetation to calculate percentages
     is_anthropic = land_use_layers.eq(1).Or(land_use_layers.eq(4)).Or(land_use_layers.eq(6))

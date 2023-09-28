@@ -13,12 +13,14 @@ from googleapiclient.discovery import build
 import google.auth
 from google.cloud import storage
 
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
+# The path to the assets in Earth Engine.
+PARENT_PATH = f'projects/{GCP_PROJECT_ID}/assets/'
 
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
-PARENT_PATH = 'projects/timberid-prd/assets/'
-
 
 @functions_framework.cloud_event
 def update_ee_acl(cloud_event: CloudEvent) -> None:
@@ -58,7 +60,11 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
         # Initialise a client
         storage_client = storage.Client()
         # Create a bucket object for our bucket
-        bucket = storage_client.get_bucket("gadmin_credentials")
+        bucket_name = "gadmin_credentials_prd"
+        if GCP_PROJECT_ID == 'river-sky-386919':
+            bucket_name = "gadmin_credentials"
+
+        bucket = storage_client.get_bucket(bucket_name)
         # Create a blob object from the filepath
         blob = bucket.blob("credentials.json")
         # Download the file to a destination
@@ -145,10 +151,8 @@ def update_ee_acl(cloud_event: CloudEvent) -> None:
         
         value = doc.to_dict()
         if 'org_email' in value and 'org_name' in value:
-            org_email = value.get('org_email')
-            org_name = value.get('org_name')
-            emails = value.get('emails')
-
+            org_email = (value.get('org_email')).lower()
+            org_name = (value.get('org_name')).lower()
             #check if org_email is associated to a google group
             check_org(org_email, org_name)
 

@@ -3,13 +3,12 @@ from firebase_admin import firestore
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 import google.auth
+import os
 
 from google.cloud import storage
 
-
-
-
-
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 
 class UserIam():
 
@@ -23,7 +22,11 @@ class UserIam():
     # Initialise a client
     storage_client = storage.Client()
     # Create a bucket object for our bucket
-    bucket = storage_client.get_bucket("gadmin_credentials")
+    bucket_name = "gadmin_credentials_prd"
+    if GCP_PROJECT_ID == 'river-sky-386919':
+      bucket_name = "gadmin_credentials"
+
+    bucket = storage_client.get_bucket(bucket_name)
     # Create a blob object from the filepath
     blob = bucket.blob("credentials.json")
     # Download the file to a destination
@@ -40,6 +43,7 @@ class UserIam():
     role = value.get('role')
     org_id = value.get('org')
     requests = []
+
     if role == "admin": #have access to the GCP project
       member= {
         "kind": "member",
@@ -47,7 +51,11 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers@timberid.org', body = member)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+
+      add_request = self.service.members().insert(groupKey = grp_key, body = member)
       requests.append(add_request)
       member= {
         "kind": "admin",
@@ -77,14 +85,18 @@ class UserIam():
         "role": "MEMBER",
         "type": "USER"
       }
-      add_request = self.service.members().insert(groupKey = 'earth-engine-developers@timberid.org', body = member)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+      add_request = self.service.members().insert(groupKey = grp_key, body = member)
       requests.append(add_request)
       
     client: google.cloud.firestore.Client = firestore.client()
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      if (org_email != None) and (org_email != "") : 
+      if (org_email != None) and (org_email != "") :
+        org_email = org_email.lower()
         print("org email is ")
         print(org_email)
         add_request = self.service.members().insert(groupKey = org_email, body = member)
@@ -135,7 +147,10 @@ class UserIam():
     client: google.cloud.firestore.Client = firestore.client()
 
     if role == "admin" or role == "member": #have access to the GCP project
-      add_request = self.service.members().delete(groupKey = 'earth-engine-developers@timberid.org', memberKey = email)
+      grp_key = 'earth-engine-developers@timberid.org'
+      if GCP_PROJECT_ID == 'river-sky-386919':
+        grp_key = 'earth-engine-developers-test@timberid.org'
+      add_request = self.service.members().delete(groupKey = grp_key, memberKey = email)
       requests.append(add_request)
     elif role == "site_admin": #manage the organization and have access to the GCP project
       add_request = self.service.members().delete(groupKey = 'gcp-organization-admins@timberid.org', memberKey = email)
@@ -143,7 +158,8 @@ class UserIam():
 
     if org_id != '':
       org_email = ((client.collection('organizations').document(org_id)).get().to_dict()).get('org_email')
-      if (org_email != None) and (org_email != "") : 
+      if (org_email != None) and (org_email != "") :
+        org_email = org_email.lower()
         add_request = self.service.members().delete(groupKey = org_email, memberKey = email)
         print("org email is ")
         print(org_email)

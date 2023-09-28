@@ -11,6 +11,11 @@ import json
 from datetime import datetime
 import google.auth
 
+# Get function environment variable for GCP project ID to use for accessing Earth Engine.
+GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
+
+# The path to the ee_org folder in Earth Engine.
+ORG_EE_PATH = f'projects/{GCP_PROJECT_ID}/assets/ee_org'
 
 app = initialize_app()
 root = path.dirname(path.abspath(__file__))
@@ -179,11 +184,11 @@ def etl(request):
                     
                 print(task.status())
                 org_email = k.lower() + "@timberid.org"
+                if GCP_PROJECT_ID == 'river-sky-386919':
+                    org_email = k.lower() + '-test@timberid.org'
                 acl = { "writers": ['group:'+org_email]}
                 ee.data.setAssetAcl(AssetId, acl)
     client: google.cloud.firestore.Client = firestore.client()
-
-    ORG_EE_PATH = 'projects/river-sky-386919/assets/ee_org'
 
     try:
 
