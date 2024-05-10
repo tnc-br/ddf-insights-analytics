@@ -4,6 +4,7 @@ import os
 import numpy as np
 import scipy
 import google.auth
+
 from typing import Sequence
 
 """Global Variable definition"""
@@ -68,17 +69,24 @@ class _ttest():
         self.carbon_isoscape = None
         self.nitrogen_isoscape = None
         self.p_value_theshold = 0
+        self.oxygen_isoscape_name = None
+        self.oxygen_isoscape_date = None
+        self.oxygen_isoscape_precision = None
+        self.oxygen_isoscape_recall = None
         asset_list = get_asset_list(ISOSCAPES_EE_PATH)
         for asset in asset_list:
             if 'd18O_isoscape' in asset:
-                self.oxygen_isoscape = ee.Image(asset)
-                self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['REFERENCE_ISOSCAPE_NAME']
-                self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
-                self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
-                self.oxygen_isoscape_precision = ee.data.getAsset(asset)['properties']['PRECISION']
-                self.oxygen_isoscape_recall = ee.data.getAsset(asset)['properties']['RECALL']
+                try:
+                    self.oxygen_isoscape = ee.Image(asset)
+                    self.oxygen_isoscape_name = ee.data.getAsset(asset)['properties']['REFERENCE_ISOSCAPE_NAME']
+                    self.oxygen_isoscape_date = ee.data.getAsset(asset)['properties']['DATE_TIME']
+                    self.p_value_theshold = float(ee.data.getAsset(asset)['properties']['P_VALUE_THRESHOLD'])
+                    self.oxygen_isoscape_precision = ee.data.getAsset(asset)['properties']['PRECISION']
+                    self.oxygen_isoscape_recall = ee.data.getAsset(asset)['properties']['RECALL']
 
-                print(f'found d18O_isoscape in EE assets with properties: name {self.oxygen_isoscape_name} date {self.oxygen_isoscape_date} threshold {self.p_value_theshold} precision {self.oxygen_isoscape_precision} recall {self.oxygen_isoscape_recall}')
+                    print(f'found d18O_isoscape in EE assets with properties: name {self.oxygen_isoscape_name} date {self.oxygen_isoscape_date} threshold {self.p_value_theshold} precision {self.oxygen_isoscape_precision} recall {self.oxygen_isoscape_recall}')
+                except Exception as e:
+                    print(f'caught {type(e)} while reading isoscape {asset}')
             elif 'd13C_isoscape' in asset:
                 self.carbon_isoscape = ee.Image(asset)
             elif 'd15N_isoscape' in asset:
