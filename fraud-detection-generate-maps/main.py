@@ -193,5 +193,6 @@ def upload_map_to_gcs(html_file, document_id):
     """
     storage_client = storage.Client()
     bucket = storage_client.bucket(GCS_BUCKET_NAME)
-    blob = bucket.blob(GCS_FOLDER_NAME + "/" + document_id)
+    blob = bucket.blob(f"{GCS_FOLDER_NAME}/{document_id}.html")
     blob.upload_from_filename(html_file)
+    print(f"Map uploaded to gs://{GCS_BUCKET_NAME}/{GCS_FOLDER_NAME}/{document_id}.html")
