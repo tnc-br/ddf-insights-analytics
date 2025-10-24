@@ -15,7 +15,6 @@ from mock_earth_engine import ee_mock as ee
 COLLECTION_7_1 = "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
 COLLECTION_8 = "projects/mapbiomas-workspace/public/collection8/mapbiomas_collection80_integration_v1"
 
-
 def check_mapbiomas_version():
     """Verifica informações sobre as versões do MapBiomas"""
     print("\n" + "=" * 80)
