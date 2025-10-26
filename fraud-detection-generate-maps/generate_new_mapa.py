@@ -196,11 +196,24 @@ def write_out(out_dir, genplot, result_stack, data, base_profile):
 
         for i in range(plot_count):
             img = result_stack[i].reshape(base_profile['height'], base_profile['width'])
-            im = axes[i].imshow(img, cmap='viridis')
+            
+            # Mascarar valores nodata para visualização correta
+            nodata = base_profile.get('nodata', -9999)
+            img_masked = np.ma.masked_where(img == nodata, img)
+            
+            # Normalizar valores válidos para escala 0-1
+            valid_data = img_masked.compressed()
+            if len(valid_data) > 0:
+                vmin = valid_data.min()
+                vmax = valid_data.max()
+            else:
+                vmin, vmax = 0, 1
+            
+            im = axes[i].imshow(img_masked, cmap='viridis', vmin=vmin, vmax=vmax, interpolation='nearest')
             axes[i].set_title(data.iloc[i, 0])
             axes[i].set_xticks([])
             axes[i].set_yticks([])
-            fig.colorbar(im, ax=axes[i])
+            fig.colorbar(im, ax=axes[i], label='Probability Density')
 
         # Hide unused subplots
         for j in range(plot_count, len(axes)):
@@ -231,13 +244,14 @@ def _pd_raster_default(r_path, unknown, prior=None, mask=None, genplot=True, out
 
         # Apply mask if provided
         if mask is not None:
-            mean_data, transform = rio_mask(src, shapes=mask.geometry, crop=True, band=1)
-            sd_data, _ = rio_mask(src, shapes=mask.geometry, crop=True, band=2)
+            mean_data, transform = rio_mask(src, shapes=mask.geometry, crop=True, indexes=1)
+            sd_data, _ = rio_mask(src, shapes=mask.geometry, crop=True, indexes=2)
+            # indexes=1 (not [1]) returns 2D array directly (height, width)
             mean_data = mean_data.astype(profile['dtype'])
             sd_data = sd_data.astype(profile['dtype'])
             profile.update({
-                'height': mean_data.shape[1],
-                'width': mean_data.shape[2],
+                'height': mean_data.shape[0],
+                'width': mean_data.shape[1],
                 'transform': transform
             })
         else:
@@ -284,7 +298,7 @@ def _pd_raster_default(r_path, unknown, prior=None, mask=None, genplot=True, out
 
         if out_dir:
             filename = os.path.join(out_dir, f"{indv_id}_like.tif")
-            profile.update(dtype=rasterio.float32, count=1)
+            profile.update(dtype=rasterio.float32, count=1, nodata=-9999)
             with rasterio.open(filename, 'w', **profile) as dst:
                 dst.write(full_assign_norm.reshape(profile['height'], profile['width']), 1)
 
@@ -303,11 +317,12 @@ def _pd_raster_iso_stack(r_paths, unknown, prior=None, mask=None, genplot=True, 
         base_profile = src.profile
         transform = src.transform
         if mask is not None:
-            mean_data, transform = rio_mask(src, shapes=mask.geometry, crop=True, band=1)
-            sd_data, _ = rio_mask(src, shapes=mask.geometry, crop=True, band=2)
+            mean_data, transform = rio_mask(src, shapes=mask.geometry, crop=True, indexes=1)
+            sd_data, _ = rio_mask(src, shapes=mask.geometry, crop=True, indexes=2)
+            # indexes=1 (not [1]) returns 2D array directly (height, width)
             base_profile.update({
-                'height': mean_data.shape[1],
-                'width': mean_data.shape[2],
+                'height': mean_data.shape[0],
+                'width': mean_data.shape[1],
                 'transform': transform
             })
         else:
@@ -321,10 +336,13 @@ def _pd_raster_iso_stack(r_paths, unknown, prior=None, mask=None, genplot=True, 
     # Read and process remaining isoscapes
     for i in range(1, ni):
         with rasterio.open(r_paths[i]) as src:
-            compare_geom(src.profile, base_profile) # Ensure all isoscapes match
+            # Only compare geometry if no mask (mask changes transform)
+            if mask is None:
+                compare_geom(src.profile, base_profile)
             if mask is not None:
-                mean_data_i, _ = rio_mask(src, shapes=mask.geometry, crop=True, band=1)
-                sd_data_i, _ = rio_mask(src, shapes=mask.geometry, crop=True, band=2)
+                mean_data_i, _ = rio_mask(src, shapes=mask.geometry, crop=True, indexes=1)
+                sd_data_i, _ = rio_mask(src, shapes=mask.geometry, crop=True, indexes=2)
+                # indexes=1 (not [1]) returns 2D array directly (height, width)
             else:
                 mean_data_i = src.read(1)
                 sd_data_i = src.read(2)
@@ -404,7 +422,7 @@ def _pd_raster_iso_stack(r_paths, unknown, prior=None, mask=None, genplot=True, 
 
         if out_dir:
             filename = os.path.join(out_dir, f"{indv_id}_like.tif")
-            base_profile.update(dtype=rasterio.float32, count=1)
+            base_profile.update(dtype=rasterio.float32, count=1, nodata=-9999)
             with rasterio.open(filename, 'w', **base_profile) as dst:
                 dst.write(full_assign_norm.reshape(base_profile['height'], base_profile['width']), 1)
 
@@ -467,3 +485,7 @@ def pd_raster(r, unknown, prior=None, mask=None, genplot=True, out_dir=None):
 
     else:
         raise TypeError("Argument 'r' must be a string (filepath) or a list of strings.")
+
+
+
+
