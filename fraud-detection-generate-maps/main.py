@@ -31,7 +31,8 @@ RADIUS_MASK_10_KM_LAYER_NAME = "10 km radius mask"
 BRAZIL_LAND_USE_LAYER_NAME = "Brazil Land Use"
 
 # https://gee-community-catalog.org/projects/mapbiomas/
-MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE =  "projects/mapbiomas-workspace/public/collection7_1/mapbiomas_collection71_deforestation_regeneration_v1"
+# Updated to Collection 8 (latest available version as of 2024)
+MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE = "projects/mapbiomas-public/assets/brazil/lulc/collection8/mapbiomas_collection80_integration_v1"
 
 # Triggered from a message on a Cloud Pub/Sub topic.
 #
@@ -44,7 +45,7 @@ MAPBIOMAS_BRAZIL_LAND_USE_EE_IMAGE =  "projects/mapbiomas-workspace/public/colle
 def receive_pubsub_message_generate_maps(cloud_event):
     # Authenticate to Earth Engine using service account creds
     credentials = compute_engine.Credentials(scopes=['https://www.googleapis.com/auth/earthengine'])
-    ee.Initialize(credentials)
+    ee.Initialize(credentials, project=GCP_PROJECT_ID)
 
     # Print out the data from Pub/Sub, to prove that it worked
     pub_sub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode()
@@ -105,25 +106,55 @@ def generate_initial_map(land_use_mapbiomas_image):
         A `geemap.Map` object representing the initial map.
     """
     # load MapBiomas Brazil deforestation + land use dataset
+    # Collection 8 uses "classification_YYYY" bands instead of "product_YYYY"
     land_use_layers_2021_simplified = (
-        land_use_mapbiomas_image.select("product_2021").divide(100).floor()
+        land_use_mapbiomas_image.select("classification_2021")
     )
     # display the full land use map
+    # MapBiomas Collection 8 Land Use and Land Cover classification
+    # Values range from 0-49 representing different land use classes
     vis_params = {
-        "min": 1,
-        "max": 7,
+        "min": 0,
+        "max": 49,
         "palette": [
-            "#fffbc2",  # 1, 'Anthropic'
-            "#09611f",  # 2, 'Primary Vegetation'
-            "#4ea376",  # 3, 'Secondary Vegetation'
-            "#e31a1c",  # 4, 'Deforestation in  Primary Vegetation'
-            "#94fc03",  # 5, 'Secondary Vegetation Regrowth'
-            "#ffa500",  # 6, 'Deforestation in Secondary Vegetation'
-            "#212121",  # 7, 'Not applied'
+            "#129912",  # 1 Forest
+            "#1f4423",  # 3 Forest Formation
+            "#006400",  # 4 Savanna Formation
+            "#00ff00",  # 5 Mangrove
+            "#687537",  # 49 Wooded Sandbank Vegetation
+            "#935132",  # 11 Wetland
+            "#bbfcac",  # 12 Grassland
+            "#45c2a5",  # 32 Salt Flat
+            "#b8af4f",  # 29 Rocky Outcrop
+            "#f1c232",  # 50 Herbaceous Sandbank Vegetation
+            "#ffffb2",  # 13 Other Non Forest Formations
+            "#ffd966",  # 15 Pasture
+            "#e974ed",  # 18 Agriculture
+            "#d5a6bd",  # 19 Temporary Crops
+            "#c27ba0",  # 39 Soy Beans
+            "#fff3bf",  # 20 Sugar Cane
+            "#ea9999",  # 40 Rice
+            "#dd7e6b",  # 62 Cotton
+            "#aa0000",  # 41 Other Temporary Crops
+            "#ff99ff",  # 36 Perennial Crops
+            "#d68fe2",  # 46 Coffee
+            "#9c6f38",  # 47 Citrus
+            "#0000ff",  # 35 Palm Oil
+            "#d082de",  # 48 Other Perennial Crops
+            "#cd49e4",  # 9 Forest Plantation
+            "#e6ccff",  # 21 Mosaic of Uses
+            "#af2a2a",  # 23 Beach and Dune
+            "#8a2be2",  # 24 Urban Infrastructure
+            "#968c46",  # 30 Mining
+            "#0000ff",  # 25 Other Non Vegetated Areas
+            "#45c2a5",  # 33 Water
+            "#b5b5b5",  # 31 Aquaculture
+            "#6b9932"   # 27 Not Observed
         ],
     }
 
-    gee_mapbiomas_map = geemap.Map()
+    # Disable automatic EE initialization in geemap since we already initialized
+    gee_mapbiomas_map = geemap.Map(ee_initialize=False)
     gee_mapbiomas_map.addLayer(land_use_layers_2021_simplified, vis_params, BRAZIL_LAND_USE_LAYER_NAME)
     return gee_mapbiomas_map
 
@@ -193,5 +224,6 @@ def upload_map_to_gcs(html_file, document_id):
     """
     storage_client = storage.Client()
     bucket = storage_client.bucket(GCS_BUCKET_NAME)
-    blob = bucket.blob(GCS_FOLDER_NAME + "/" + document_id)
+    blob = bucket.blob(f"{GCS_FOLDER_NAME}/{document_id}.html")
     blob.upload_from_filename(html_file)
+    print(f"Map uploaded to gs://{GCS_BUCKET_NAME}/{GCS_FOLDER_NAME}/{document_id}.html")
