@@ -1,0 +1,19 @@
+# Requirements for local isotopic analysis
+# For generate_new_mapa.py and new_code_to_generate_map.py
+
+# Core geospatial libraries
+rasterio>=1.3.0
+geopandas>=0.14.0
+shapely>=2.0.0
+
+# Scientific computing
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Firebase (optional, for accessing Firestore data)
+firebase-admin>=6.0.0
+google-cloud-firestore>=2.11.0
